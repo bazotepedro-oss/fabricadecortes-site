@@ -133,14 +133,12 @@ export async function POST(req: Request) {
           console.warn('[Webhook] Erro no provisionamento local:', provErr);
         }
       } else {
-        // Se a ordem foi gerada em modo serverless na Vercel, provisiona no servidor Railway diretamente
-        const randomKey = `FC-${Math.random().toString(36).substring(2, 7).toUpperCase()}-ATIVADA`;
-        await createLicenseOnServer({
-          licenseKey: randomKey,
-          credits,
-          days: 365,
-          plan: planSlug,
-        }).catch((err) => console.error('[Webhook] Erro ao criar licença no Railway:', err));
+        // Se a ordem foi gerada em outro container serverless da Vercel,
+        // aciona o sincronizador unificado que cria o cliente, pedido, licença e aluno no HostGator
+        const { syncAbacatePay } = await import('@/lib/sync-abacatepay');
+        await syncAbacatePay().catch((err) =>
+          console.error('[Webhook] Erro ao sincronizar compra via syncAbacatePay:', err)
+        );
       }
     }
   } else if (status === 'canceled' || status === 'refunded') {

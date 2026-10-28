@@ -15,6 +15,8 @@ export interface ProvisionInput {
   email: string;
   plan: string;
   includeCourse?: boolean;
+  licenseKey?: string;
+  password?: string;
 }
 
 export interface ProvisionResult {
@@ -109,7 +111,7 @@ function getPlanSpecs(planSlug: string): { credits: number; days: number } {
 
 export async function provision(input: ProvisionInput): Promise<ProvisionResult> {
   const username = generateUsername(input.email);
-  const temporaryPassword = generatePassword();
+  const temporaryPassword = input.password || generatePassword();
   const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
 
   // Token de acesso rápido à página de acesso
@@ -141,10 +143,10 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
     };
   }
 
-  // 1. Gera a Chave de Licença oficial Fábrica dos Cortes
-  const licenseKey = generateLicenseKey();
+  // 1. Chave de Licença oficial Fábrica dos Cortes (usa a fornecida ou gera nova)
+  const licenseKey = (input.licenseKey || generateLicenseKey()).trim().toUpperCase();
 
-  // 2. Registra automaticamente no Servidor PostgreSQL do Railway!
+  // 2. Se for nova chave e ainda não existir no Railway, registra no servidor Railway!
   try {
     const srvRes = await createLicenseOnServer({
       licenseKey,

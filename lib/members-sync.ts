@@ -6,11 +6,20 @@
 
 const ADMIN_SECRET = 'fabricadecortes_secret_2026';
 
+const DEFAULT_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json, text/plain, */*',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+};
+
 export function getMembersApiUrl(): string {
   if (process.env.MEMBERS_API_URL) {
     return process.env.MEMBERS_API_URL;
   }
-  const membersUrl = process.env.MEMBERS_URL || process.env.NEXT_PUBLIC_MEMBERS_URL || 'https://membros.fabricadecortes.com/index.php';
+  const membersUrl =
+    process.env.MEMBERS_URL ||
+    process.env.NEXT_PUBLIC_MEMBERS_URL ||
+    'https://membros.fabricadecortes.com/index.php';
   return membersUrl.replace(/\/index\.php$/i, '/api.php');
 }
 
@@ -22,7 +31,7 @@ export async function syncAddStudent(params: { name: string; email: string; pass
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_add_student`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
         nome: params.name,
@@ -54,7 +63,7 @@ export async function syncDeleteStudent(email: string): Promise<boolean> {
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_delete_student`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
         email: email.toLowerCase().trim(),
@@ -76,6 +85,54 @@ export async function syncDeleteStudent(email: string): Promise<boolean> {
 }
 
 /**
+ * Lista todos os e-mails de alunos excluídos persistentemente na Área de Membros
+ */
+export async function syncListDeletedStudents(): Promise<Set<string>> {
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(`${apiUrl}?action=admin_list_deleted`, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({ secret: ADMIN_SECRET }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && Array.isArray(data?.deleted)) {
+      return new Set(data.deleted.map((e: string) => String(e).toLowerCase().trim()));
+    }
+    return new Set();
+  } catch (err: any) {
+    console.warn(`[MembersSync] Falha ao listar alunos excluídos:`, err?.message);
+    return new Set();
+  }
+}
+
+/**
+ * Lista todos os alunos cadastrados na Área de Membros
+ */
+export async function syncListStudents(): Promise<any[]> {
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(`${apiUrl}?action=admin_list_students`, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({ secret: ADMIN_SECRET }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && Array.isArray(data?.alunos)) {
+      return data.alunos;
+    }
+    return [];
+  } catch (err: any) {
+    console.warn(`[MembersSync] Falha ao listar alunos:`, err?.message);
+    return [];
+  }
+}
+
+/**
  * Bloqueia ou desbloqueia o acesso do aluno na Área de Membros
  */
 export async function syncToggleStudent(email: string, status: 'ativo' | 'bloqueado'): Promise<boolean> {
@@ -84,7 +141,7 @@ export async function syncToggleStudent(email: string, status: 'ativo' | 'bloque
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_toggle_student`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
         email: email.toLowerCase().trim(),
@@ -114,7 +171,7 @@ export async function syncSetStudentPassword(email: string, novaSenha: string): 
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_set_password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
         email: email.toLowerCase().trim(),
@@ -144,7 +201,7 @@ export async function syncClearStudents(): Promise<boolean> {
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_clear_students`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
       }),
@@ -158,4 +215,5 @@ export async function syncClearStudents(): Promise<boolean> {
     return false;
   }
 }
+
 

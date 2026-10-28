@@ -177,7 +177,9 @@ export async function POST(req: Request) {
       metadata: {
         orderId,
         slug,
+        name,
         email,
+        phone: phone || '',
         includeCourse: includeCourse ? 'true' : 'false',
         affiliateId: affiliate?.id || '',
         couponCode: affiliate?.couponCode || '',

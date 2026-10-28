@@ -3,13 +3,16 @@ import {
   listLicensesFromServer,
   addCreditsOnServer,
   createLicenseOnServer,
+  generateLicenseKey,
 } from './license-server';
 import { provision } from './provisioning';
 import { sendRechargeEmail } from './email';
+import { syncListDeletedStudents, syncListStudents } from './members-sync';
+import { FALLBACK_PLANS } from './plans';
 
 /**
  * Sincroniza pagamentos da AbacatePay (v2) diretamente com o banco local e Railway.
- * Funciona mesmo em localhost sem precisar de webhook externo!
+ * Funciona de forma resiliente tanto em localhost quanto em ambiente serverless na Vercel!
  */
 export async function syncAbacatePay(): Promise<{ synced: number; processed: string[] }> {
   const apiKey = process.env.ABACATEPAY_API_KEY || 'abc_dev_zWzyHEKWK5cX6gZf63HUWpZy';
@@ -17,135 +20,231 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
   try {
     const res = await fetch('https://api.abacatepay.com/v2/checkouts/list', {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json',
+      },
       cache: 'no-store',
     });
 
-    if (!res.ok) return { synced: 0, processed: [] };
+    if (!res.ok) {
+      console.warn('[Sync AbacatePay] Resposta da API:', res.status, res.statusText);
+      return { synced: 0, processed: [] };
+    }
+
     const json = await res.json();
     const checkouts = json.data || [];
 
     const processed: string[] = [];
-    const railwayLicenses = await listLicensesFromServer().catch(() => []);
+    const [railwayLicenses, deletedEmails, hostgatorStudents] = await Promise.all([
+      listLicensesFromServer().catch(() => []),
+      syncListDeletedStudents().catch(() => new Set<string>()),
+      syncListStudents().catch(() => []),
+    ]);
 
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
 
-      let order: any = null;
-      try {
-        order = await prisma.order.findFirst({
-          where: {
-            OR: [
-              { abacateCheckoutId: c.id },
-              { id: c.metadata?.orderId },
-            ],
-          },
-          include: { customer: true, plan: true },
-        });
-      } catch (err) {
-        console.warn('[Sync AbacatePay] Prisma indisponível:', err);
+      const meta = c.metadata || {};
+      const customerEmail = (meta.email || '').toLowerCase().trim();
+
+      // Se o cliente não tem e-mail ou foi expressamente excluído pelo administrador, ignora
+      if (!customerEmail) continue;
+      if (deletedEmails.has(customerEmail)) {
+        continue;
       }
 
-      if (order && order.status === 'paid') continue;
-
-      // 1. Marca como pago no banco se disponível
-      if (order) {
+      try {
+        let order: any = null;
         try {
-          await prisma.order.update({
+          order = await prisma.order.findFirst({
+            where: {
+              OR: [
+                { abacateCheckoutId: c.id },
+                ...(meta.orderId ? [{ id: meta.orderId }] : []),
+              ],
+            },
+            include: { customer: true, plan: true },
+          });
+        } catch (err) {
+          console.warn('[Sync AbacatePay] Prisma indisponível para consulta de pedido:', err);
+        }
+
+        // Se o pedido já existe e está pago, não precisa reprocessar
+        if (order && order.status === 'paid') {
+          processed.push(c.id);
+          continue;
+        }
+
+        const isRecharge = meta.isRecharge === true || meta.isRecharge === 'true';
+        const planSlug = meta.slug || 'pack_criador';
+        const fallbackPlan = FALLBACK_PLANS.find((p) => p.slug === planSlug) || FALLBACK_PLANS[0];
+
+        // 1. Garante que o Plan existe no banco de dados local
+        let dbPlan = await prisma.plan.findUnique({ where: { slug: planSlug } }).catch(() => null);
+        if (!dbPlan) {
+          dbPlan = await prisma.plan.upsert({
+            where: { slug: fallbackPlan.slug },
+            update: {},
+            create: {
+              id: fallbackPlan.id,
+              name: fallbackPlan.name,
+              slug: fallbackPlan.slug,
+              price: fallbackPlan.price,
+              currency: 'BRL',
+              interval: fallbackPlan.interval,
+              active: true,
+            },
+          }).catch(() => null);
+        }
+
+        // 2. Garante que o Customer existe no banco de dados local
+        let customer = await prisma.customer.findUnique({ where: { email: customerEmail } }).catch(() => null);
+        if (!customer) {
+          const hgStudent = hostgatorStudents.find((s: any) => s.email?.toLowerCase() === customerEmail);
+          const customerName = meta.name || hgStudent?.nome || customerEmail.split('@')[0];
+          customer = await prisma.customer.create({
+            data: {
+              name: customerName,
+              email: customerEmail,
+              phone: meta.phone || null,
+            },
+          });
+        }
+
+        // 3. Garante que o Order existe e está marcado como 'paid'
+        const paidDate = new Date(c.updatedAt || c.createdAt || Date.now());
+        const orderAmount = Number(c.amount || c.paidAmount || dbPlan?.price || 8690);
+
+        if (!order) {
+          order = await prisma.order.create({
+            data: {
+              id: meta.orderId || `ord_${c.id}`,
+              customerId: customer.id,
+              planId: dbPlan?.id || fallbackPlan.id,
+              status: 'paid',
+              amount: orderAmount,
+              currency: 'BRL',
+              abacateCheckoutId: c.id,
+              paidAt: paidDate,
+              createdAt: new Date(c.createdAt || Date.now()),
+              metadata: meta,
+            },
+            include: { customer: true, plan: true },
+          });
+        } else {
+          order = await prisma.order.update({
             where: { id: order.id },
             data: {
               status: 'paid',
-              paidAt: new Date(c.updatedAt || Date.now()),
-              commissionStatus: order.affiliateId ? 'credited' : order.commissionStatus,
+              paidAt: paidDate,
             },
+            include: { customer: true, plan: true },
           });
-        } catch {}
-      }
-
-      const meta = (order?.metadata as any) || c.metadata || {};
-      const isRecharge = meta.isRecharge === true || meta.isRecharge === 'true';
-
-      if (isRecharge && meta.licenseKey && meta.creditsToAdd) {
-        const credits = Number(meta.creditsToAdd);
-        const key = String(meta.licenseKey).trim();
-        const existsOnRailway = railwayLicenses.some(
-          (l) => l.license_key.toUpperCase() === key.toUpperCase()
-        );
-
-        if (existsOnRailway) {
-          await addCreditsOnServer(key, credits);
-          console.log(`[Sync AbacatePay] +${credits} créditos adicionados à chave existente ${key}`);
-        } else {
-          await createLicenseOnServer({
-            licenseKey: key,
-            credits,
-            days: 365,
-            plan: meta.packageSlug || 'recarga',
-          });
-          console.log(`[Sync AbacatePay] Nova chave ${key} criada no Railway com ${credits} créditos`);
         }
 
-        // Atualiza ou cria a credencial no banco local
-        await prisma.accessCredentials.upsert({
-          where: { id: `cred_${order.id}` },
-          update: {
-            credits,
-            licenseKey: key,
-            status: 'active',
-          },
-          create: {
-            id: `cred_${order.id}`,
-            customerId: order.customerId,
-            orderId: order.id,
-            username: order.customer.email.split('@')[0],
-            accessUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/acesso`,
-            licenseKey: key,
-            credits,
-            status: 'active',
-            expiresAt: new Date(Date.now() + 365 * 86400000),
-          },
-        });
+        if (isRecharge && meta.licenseKey && meta.creditsToAdd) {
+          const credits = Number(meta.creditsToAdd);
+          const key = String(meta.licenseKey).trim();
+          const existsOnRailway = railwayLicenses.some(
+            (l) => l.license_key.toUpperCase() === key.toUpperCase()
+          );
 
-        // Envia e-mail de recarga confirmada
-        await sendRechargeEmail({
-          to: order.customer.email,
-          name: order.customer.name,
-          licenseKey: key,
-          creditsAdded: credits,
-        }).catch((err) => console.error('[Sync AbacatePay] Falha ao enviar e-mail de recarga:', err));
-      } else if (!isRecharge) {
-        // Compra de plano novo
-        let subscription = await prisma.subscription.findFirst({
-          where: { customerId: order.customerId, planId: order.planId, status: 'active' },
-        });
+          if (existsOnRailway) {
+            await addCreditsOnServer(key, credits);
+          } else {
+            await createLicenseOnServer({
+              licenseKey: key,
+              credits,
+              days: 365,
+              plan: meta.packageSlug || 'recarga',
+            });
+          }
 
-        if (!subscription) {
-          subscription = await prisma.subscription.create({
-            data: {
-              customerId: order.customerId,
-              planId: order.planId,
+          // Atualiza ou cria a credencial no banco local
+          await prisma.accessCredentials.upsert({
+            where: { id: `cred_${order.id}` },
+            update: {
+              credits: { increment: credits },
+              licenseKey: key,
               status: 'active',
-              provider: 'AbacatePay',
+            },
+            create: {
+              id: `cred_${order.id}`,
+              customerId: customer.id,
               orderId: order.id,
+              username: customerEmail.split('@')[0],
+              accessUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/acesso`,
+              licenseKey: key,
+              credits,
+              status: 'active',
+              expiresAt: new Date(Date.now() + 365 * 86400000),
             },
           });
+
+          await sendRechargeEmail({
+            to: customerEmail,
+            name: customer.name,
+            licenseKey: key,
+            creditsAdded: credits,
+          }).catch((err) => console.error('[Sync AbacatePay] Falha ao enviar e-mail de recarga:', err));
+        } else if (!isRecharge) {
+          // Compra de plano novo: verifica se já tem credencial ativa
+          let cred = await prisma.accessCredentials.findFirst({
+            where: { customerId: customer.id },
+          });
+
+          if (!cred) {
+            // Localiza se já existe chave do Railway vinculada ou gerada para este plano
+            const allCreds = await prisma.accessCredentials.findMany({ select: { licenseKey: true } }).catch(() => []);
+            const assignedKeys = allCreds.map((k) => k.licenseKey);
+            const matchingLic = railwayLicenses.find(
+              (l) => l.plan === planSlug && l.status === 'active' && !assignedKeys.includes(l.license_key)
+            );
+
+            const hgStudent = hostgatorStudents.find((s: any) => s.email?.toLowerCase() === customerEmail);
+            const studentPassword = hgStudent?.senha_plana || meta.password || undefined;
+            const chosenKey = matchingLic ? matchingLic.license_key : undefined;
+
+            let subscription = await prisma.subscription.findFirst({
+              where: { customerId: customer.id, planId: order.planId, status: 'active' },
+            }).catch(() => null);
+
+            if (!subscription) {
+              subscription = await prisma.subscription.create({
+                data: {
+                  customerId: customer.id,
+                  planId: order.planId,
+                  status: 'active',
+                  provider: 'AbacatePay',
+                  orderId: order.id,
+                },
+              });
+            }
+
+            await provision({
+              customerId: customer.id,
+              orderId: order.id,
+              subscriptionId: subscription.id,
+              email: customerEmail,
+              plan: planSlug,
+              licenseKey: chosenKey,
+              password: studentPassword,
+              includeCourse: meta.includeCourse === 'true' || meta.includeCourse === true,
+            });
+          }
         }
 
-        await provision({
-          customerId: order.customerId,
-          orderId: order.id,
-          subscriptionId: subscription.id,
-          email: order.customer.email,
-          plan: order.plan.slug,
-        });
+        processed.push(c.id);
+      } catch (itemErr: any) {
+        console.error(`[Sync AbacatePay] Falha ao processar checkout ${c.id}:`, itemErr?.message);
       }
-
-      processed.push(c.id);
     }
 
     return { synced: processed.length, processed };
   } catch (err: any) {
-    console.error('[Sync AbacatePay] Erro ao sincronizar:', err?.message);
+    console.error('[Sync AbacatePay] Erro geral ao sincronizar:', err?.message);
     return { synced: 0, processed: [] };
   }
 }
