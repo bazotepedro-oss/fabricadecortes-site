@@ -200,8 +200,13 @@ export async function POST(req: Request) {
           planName: `${plan.name} • ${reasonLabel}`,
           includeCourse: true,
         });
-        emailSent = Boolean(emailRes && (emailRes as any).id);
-        console.log(`[GrantAccess] E-mail de boas-vindas enviado para ${email}`);
+        emailSent = Boolean(emailRes && emailRes.ok);
+        if (!emailRes.ok) {
+          emailError = emailRes.error || 'Falha ao enviar e-mail';
+          console.warn(`[GrantAccess] Resend falhou:`, emailRes.error);
+        } else {
+          console.log(`[GrantAccess] E-mail de boas-vindas enviado para ${email}`);
+        }
       } catch (err: any) {
         emailError = err?.message || 'Falha ao enviar e-mail';
         console.error(`[GrantAccess] Falha ao enviar e-mail de boas-vindas:`, err?.message);

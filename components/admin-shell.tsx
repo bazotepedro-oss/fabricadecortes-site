@@ -38,6 +38,7 @@ import {
   EyeOff,
   Lock,
   UserPlus,
+  Mail,
 } from 'lucide-react';
 import type { RailwayLicense } from '@/lib/license-server';
 import { GrantAccessModal } from './grant-access-modal';
@@ -822,6 +823,33 @@ function CustomersPanel({
   const [editPassword, setEditPassword] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [clearingCrm, setClearingCrm] = useState(false);
+  const [resendingEmailId, setResendingEmailId] = useState<string | null>(null);
+  const [resendEmailMsg, setResendEmailMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null);
+
+  async function handleResendEmail(customerId: string, customerEmail: string) {
+    if (!window.confirm(`Deseja reenviar o e-mail oficial com dados de acesso, login e senha para ${customerEmail}?`)) {
+      return;
+    }
+    setResendingEmailId(customerId);
+    setResendEmailMsg(null);
+    try {
+      const res = await fetch('/api/admin/customers/resend-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId }),
+      });
+      const data = await res.json();
+      setResendEmailMsg({
+        id: customerId,
+        text: data.message || (res.ok ? 'E-mail enviado com sucesso!' : data.error),
+        ok: res.ok,
+      });
+    } catch {
+      setResendEmailMsg({ id: customerId, text: 'Erro ao conectar ao servidor', ok: false });
+    } finally {
+      setResendingEmailId(null);
+    }
+  }
 
   function startEdit(c: Customer) {
     setEditingCustomer(c);
@@ -1393,6 +1421,19 @@ function CustomersPanel({
                           <Edit2 className="h-3 w-3 mr-1" /> Editar
                         </Button>
 
+                        {/* Reenviar E-mail de Acesso */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={resendingEmailId === c.id}
+                          onClick={() => handleResendEmail(c.id, c.email)}
+                          className="text-xs h-7 px-2 text-purple-400 hover:text-purple-300 border border-purple-400/20 hover:bg-purple-400/10"
+                          title="Reenviar e-mail com Chave, Login e Senha para este cliente"
+                        >
+                          <Mail className="h-3 w-3 mr-1" />
+                          {resendingEmailId === c.id ? 'Enviando...' : 'E-mail'}
+                        </Button>
+
                         {/* Excluir do CRM */}
                         <Button
                           variant="danger"
@@ -1408,6 +1449,12 @@ function CustomersPanel({
                       {msg && msg.key === lk && (
                         <span className={`text-[11px] ${msg.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {msg.text}
+                        </span>
+                      )}
+
+                      {resendEmailMsg && resendEmailMsg.id === c.id && (
+                        <span className={`text-[11px] font-medium ${resendEmailMsg.ok ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {resendEmailMsg.text}
                         </span>
                       )}
                     </div>

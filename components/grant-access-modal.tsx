@@ -220,9 +220,14 @@ Bora pra cima! TMJ 🔥`;
                 <h3 className="text-lg font-bold text-emerald-400">Acesso Liberado com Sucesso!</h3>
                 <p className="text-xs text-emerald-300/80">
                   {result.emailSent
-                    ? `O e-mail oficial com dados de acesso foi enviado para ${result.email}!`
+                    ? `O e-mail oficial com dados de acesso foi enviado com sucesso para ${result.email}!`
                     : `Dados cadastrados com sucesso para ${result.email}.`}
                 </p>
+                {result.emailError && (
+                  <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg mt-2 font-mono">
+                    Aviso: {result.emailError}
+                  </p>
+                )}
               </div>
 
               {/* Cards de Credenciais Geradas */}
