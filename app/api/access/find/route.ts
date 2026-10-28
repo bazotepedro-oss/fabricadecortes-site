@@ -98,62 +98,40 @@ export async function GET(req: Request) {
         );
       }
 
-      // Se está pago na AbacatePay:
-      const meta = matchingCheckout.metadata || {};
-      const slug = meta.slug || 'pack_criador';
-      const credits = slug === 'pack_teste' ? 15 : slug === 'pack_iniciante' ? 30 : slug === 'pack_escala' ? 120 : slug === 'pack_pro' ? 250 : 50;
-      
-      let licenseKey = meta.licenseKey;
-      if (!licenseKey) {
-        const licenses = await listLicensesFromServer().catch(() => []);
-        if (licenses && licenses.length > 0) {
-          licenseKey = licenses[0].license_key;
-        } else {
-          const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-          licenseKey = `FC-${randomSuffix}-ATIVADA`;
-          await createLicenseOnServer({
-            licenseKey,
-            credits,
-            days: 365,
-            plan: slug,
-          }).catch(() => null);
-        }
-      }
+      // Se está pago na AbacatePay: sincroniza e provisiona no banco local, Railway, HostGator e Resend
+      const { syncAbacatePay } = await import('@/lib/sync-abacatepay');
+      await syncAbacatePay().catch((err) => console.warn('[access/find] Falha ao sincronizar:', err));
 
-      return NextResponse.json({
-        ok: true,
-        username: email ? email.split('@')[0] : 'criador_vip',
-        licenseKey: licenseKey || 'FC-VIP-ATIVADA',
-        credits,
-        accessUrl: 'https://fabricadecortes.com/acesso',
-        driveUrl: driveUrl(),
-        whatsappUrl: whatsappUrl(),
-        courseUrl: driveUrl(),
-        colabUrl: colabUrl(),
-        planName: 'Fábrica dos Cortes - Licença Oficial',
-        status: 'active',
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      // Busca a credencial provisionada
+      const freshCred = await prisma.accessCredentials.findFirst({
+        where: {
+          OR: [
+            ...(email ? [{ customer: { email } }] : []),
+            ...(orderId ? [{ orderId }] : []),
+            ...(matchingCheckout.id ? [{ order: { abacateCheckoutId: matchingCheckout.id } }] : []),
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          customer: true,
+          order: { include: { plan: true } },
+        },
       });
-    }
 
-    // 3. Se não achou na AbacatePay nem no Prisma, verifica se existe alguma licença no servidor Railway
-    if (email) {
-      const railwayLicenses = await listLicensesFromServer().catch(() => []);
-      if (railwayLicenses && railwayLicenses.length > 0) {
-        const lic = railwayLicenses[0];
+      if (freshCred) {
         return NextResponse.json({
           ok: true,
-          username: email.split('@')[0],
-          licenseKey: lic.license_key,
-          credits: lic.credits,
-          accessUrl: 'https://fabricadecortes.com/acesso',
+          username: freshCred.username,
+          licenseKey: freshCred.licenseKey,
+          credits: freshCred.credits || 50,
+          accessUrl: freshCred.accessUrl,
           driveUrl: driveUrl(),
           whatsappUrl: whatsappUrl(),
-          courseUrl: driveUrl(),
+          courseUrl: freshCred.courseUrl || driveUrl(),
           colabUrl: colabUrl(),
-          planName: 'Fábrica dos Cortes - Licença Oficial',
-          status: lic.status,
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          planName: freshCred.order?.plan?.name || 'Fábrica dos Cortes - Licença Oficial',
+          status: freshCred.status,
+          expiresAt: freshCred.expiresAt,
         });
       }
     }

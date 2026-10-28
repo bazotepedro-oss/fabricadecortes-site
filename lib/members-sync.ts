@@ -85,9 +85,12 @@ export async function syncDeleteStudent(email: string): Promise<boolean> {
 }
 
 /**
- * Lista todos os e-mails de alunos excluídos persistentemente na Área de Membros
+ * Lista todos os e-mails de alunos excluídos persistentemente na Área de Membros com a data de exclusão
  */
-export async function syncListDeletedStudents(): Promise<{ deleted: Set<string>; clearedAt: string | null }> {
+export async function syncListDeletedStudents(): Promise<{
+  deleted: { email: string; excluido_em?: string }[];
+  clearedAt: string | null;
+}> {
   try {
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_list_deleted`, {
@@ -99,13 +102,17 @@ export async function syncListDeletedStudents(): Promise<{ deleted: Set<string>;
 
     const data = await res.json().catch(() => null);
     const deleted = Array.isArray(data?.deleted)
-      ? new Set<string>(data.deleted.map((e: string) => String(e).toLowerCase().trim()))
-      : new Set<string>();
+      ? data.deleted.map((d: any) =>
+          typeof d === 'string'
+            ? { email: d.toLowerCase().trim(), excluido_em: undefined }
+            : { email: String(d.email || '').toLowerCase().trim(), excluido_em: d.excluido_em }
+        )
+      : [];
     const clearedAt = data?.cleared_at ? String(data.cleared_at) : null;
     return { deleted, clearedAt };
   } catch (err: any) {
     console.warn(`[MembersSync] Falha ao listar alunos excluídos:`, err?.message);
-    return { deleted: new Set<string>(), clearedAt: null };
+    return { deleted: [], clearedAt: null };
   }
 }
 

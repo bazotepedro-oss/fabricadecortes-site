@@ -40,7 +40,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
     const debugInfo: any[] = [];
     const [railwayLicenses, deletedInfo, hostgatorStudents, lastClearLog, deletedLogs] = await Promise.all([
       listLicensesFromServer().catch(() => []),
-      syncListDeletedStudents().catch(() => ({ deleted: new Set<string>(), clearedAt: null })),
+      syncListDeletedStudents().catch(() => ({ deleted: [], clearedAt: null })),
       syncListStudents().catch(() => []),
       prisma.auditLog.findFirst({
         where: { eventType: 'crm_cleared' },
@@ -48,14 +48,30 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       }).catch(() => null),
       prisma.auditLog.findMany({
         where: { eventType: 'customer_deleted' },
-        select: { message: true },
+        select: { message: true, createdAt: true },
       }).catch(() => []),
     ]);
 
-    const deletedEmails = new Set<string>([
-      ...Array.from(deletedInfo.deleted || []),
-      ...deletedLogs.map((l) => (l.message || '').toLowerCase().trim()).filter(Boolean),
-    ]);
+    const deletedAtMap = new Map<string, Date>();
+    if (Array.isArray(deletedInfo.deleted)) {
+      for (const item of deletedInfo.deleted) {
+        if (item.email) {
+          const dt = item.excluido_em ? new Date(item.excluido_em) : new Date(0);
+          deletedAtMap.set(item.email, dt);
+        }
+      }
+    }
+    if (Array.isArray(deletedLogs)) {
+      for (const log of deletedLogs) {
+        const email = (log.message || '').toLowerCase().trim();
+        if (email && log.createdAt) {
+          const existing = deletedAtMap.get(email);
+          if (!existing || new Date(log.createdAt) > existing) {
+            deletedAtMap.set(email, new Date(log.createdAt));
+          }
+        }
+      }
+    }
 
     let clearedAt: Date | null = null;
     if (deletedInfo.clearedAt) {
@@ -71,20 +87,20 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
 
-      // Se o checkout ocorreu antes da limpeza total do CRM, ignora permanentemente
-      if (clearedAt && c.createdAt) {
-        const cDate = new Date(c.createdAt);
-        if (cDate <= clearedAt) {
-          continue;
-        }
-      }
-
       const meta = c.metadata || {};
       const customerEmail = (meta.email || '').toLowerCase().trim();
-
-      // Se o cliente não tem e-mail ou foi expressamente excluído pelo administrador, ignora
       if (!customerEmail) continue;
-      if (deletedEmails.has(customerEmail)) {
+
+      const checkoutDate = new Date(c.createdAt || Date.now());
+
+      // 1. Se o checkout ocorreu antes da limpeza total do CRM, ignora histórico antigo
+      if (clearedAt && checkoutDate <= clearedAt) {
+        continue;
+      }
+
+      // 2. Se este cliente foi excluído e o checkout ocorreu antes ou na data da exclusão, ignora o pedido antigo
+      const deletedAt = deletedAtMap.get(customerEmail);
+      if (deletedAt && checkoutDate <= deletedAt) {
         continue;
       }
 
