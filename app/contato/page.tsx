@@ -64,9 +64,14 @@ export default function ContatoPage() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl border border-border bg-background p-4 flex items-center gap-3 text-xs text-text-secondary">
-          <Clock className="h-4 w-4 text-brand shrink-0" />
-          <span>Atendimento de segunda a sexta, das 09h às 18h (Horário de Brasília).</span>
+        <div className="mt-8 rounded-xl border border-border bg-background p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-secondary">
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 text-brand shrink-0" />
+            <span>Atendimento de segunda a sexta, das 09h às 18h (Horário de Brasília).</span>
+          </div>
+          <div className="font-medium text-text-primary">
+            CNPJ: 59.155.448/0001-27
+          </div>
         </div>
       </main>
       <Footer />

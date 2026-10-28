@@ -37,6 +37,11 @@ export function Footer() {
             <p className="text-sm text-text-secondary max-w-sm">
               Corte vídeos longos em virais com IA em segundos. Legendas dinâmicas estilo TikTok e enquadramento automático de rostos no <span className="text-brand font-semibold">fabricadecortes.com</span>.
             </p>
+            <div className="pt-2 text-xs text-text-secondary">
+              <p>
+                CNPJ: <span className="font-semibold text-text-primary">59.155.448/0001-27</span>
+              </p>
+            </div>
           </div>
 
           <div>
@@ -66,8 +71,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border pt-6 text-center text-xs text-text-secondary">
-          © {new Date().getFullYear()} Fábrica dos Cortes (<a href="https://fabricadecortes.com" className="text-brand hover:underline">fabricadecortes.com</a>). Todos os direitos reservados.
+        <div className="mt-8 border-t border-border pt-6 text-center text-xs text-text-secondary space-y-1.5">
+          <p>
+            © {new Date().getFullYear()} Fábrica dos Cortes (<a href="https://fabricadecortes.com" className="text-brand hover:underline">fabricadecortes.com</a>). Todos os direitos reservados.
+          </p>
+          <p className="text-[11px] text-text-secondary/80">
+            Fábrica dos Cortes • CNPJ 59.155.448/0001-27 • Pagamentos processados com segurança via Pix
+          </p>
         </div>
       </div>
     </footer>

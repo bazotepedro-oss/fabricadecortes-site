@@ -25,7 +25,7 @@ export default function TermosPage() {
         <div className="mt-8 space-y-6 text-text-secondary">
           <section>
             <h2 className="font-display text-xl font-semibold text-text-primary">1. Aceitação dos termos</h2>
-            <p className="mt-2">Ao assinar ou adquirir créditos na Fábrica dos Cortes (fabricadecortes.com), você concorda com estes termos de uso.</p>
+            <p className="mt-2">Ao assinar ou adquirir créditos na Fábrica dos Cortes (fabricadecortes.com), operada sob o CNPJ 59.155.448/0001-27, você concorda com estes termos de uso.</p>
           </section>
           <section>
             <h2 className="font-display text-xl font-semibold text-text-primary">2. Assinatura</h2>

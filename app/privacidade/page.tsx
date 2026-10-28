@@ -25,7 +25,7 @@ export default function PrivacidadePage() {
         <div className="mt-8 space-y-6 text-text-secondary">
           <section>
             <h2 className="font-display text-xl font-semibold text-text-primary">1. Dados coletados</h2>
-            <p className="mt-2">Coletamos nome, e-mail e telefone (opcional) para processar a assinatura e enviar acesso.</p>
+            <p className="mt-2">A Fábrica dos Cortes (CNPJ 59.155.448/0001-27) coleta nome, e-mail e telefone (opcional) exclusivamente para processar a assinatura, emitir a licença de uso e enviar o acesso.</p>
           </section>
           <section>
             <h2 className="font-display text-xl font-semibold text-text-primary">2. Armazenamento</h2>
