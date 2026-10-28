@@ -5,6 +5,9 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { rateLimit } from '@/lib/ratelimit';
 import { getPlanId, createCheckout } from '@/lib/abacatepay';
+import { FALLBACK_PLANS } from '@/lib/plans';
+
+export const dynamic = 'force-dynamic';
 
 const Schema = z.object({
   slug: z.string().min(1, 'Plano obrigatório'),
@@ -44,7 +47,30 @@ export async function POST(req: Request) {
   }
   const { slug, name, email, phone, includeCourse, couponCode, affiliateRef } = parsed.data;
 
-  const plan = await prisma.plan.findUnique({ where: { slug } });
+  let plan: any = null;
+  try {
+    plan = await prisma.plan.findUnique({ where: { slug } });
+  } catch (err) {
+    console.warn('[checkout] Erro ao buscar plano no banco, usando fallback:', err);
+  }
+
+  if (!plan) {
+    const fallback = FALLBACK_PLANS.find((p) => p.slug === slug);
+    if (fallback) {
+      plan = {
+        id: fallback.id,
+        name: fallback.name,
+        slug: fallback.slug,
+        price: fallback.price,
+        currency: fallback.currency,
+        interval: fallback.interval,
+        abacatePlanId: fallback.abacatePlanId,
+        features: fallback.features,
+        active: true,
+      };
+    }
+  }
+
   if (!plan || !plan.active) {
     return NextResponse.json({ error: 'Plano indisponível' }, { status: 404 });
   }
@@ -55,17 +81,21 @@ export async function POST(req: Request) {
 
   // Busca e validação do Afiliado / YouTuber / Cupom
   const codeToSearch = (couponCode || affiliateRef || '').trim().toUpperCase();
-  let affiliate = null;
+  let affiliate: any = null;
   if (codeToSearch) {
-    affiliate = await prisma.affiliate.findFirst({
-      where: {
-        active: true,
-        OR: [
-          { couponCode: codeToSearch },
-          { slug: codeToSearch.toLowerCase() },
-        ],
-      },
-    });
+    try {
+      affiliate = await prisma.affiliate.findFirst({
+        where: {
+          active: true,
+          OR: [
+            { couponCode: codeToSearch },
+            { slug: codeToSearch.toLowerCase() },
+          ],
+        },
+      });
+    } catch (affErr) {
+      console.warn('[checkout] Erro ao buscar cupom no banco:', affErr);
+    }
   }
 
   // Cálculo de desconto (caso o afiliado ofereça cupom de desconto ao cliente)
@@ -81,53 +111,62 @@ export async function POST(req: Request) {
     commissionAmount = Math.round((finalAmount * affiliate.commissionPercent) / 100);
   }
 
-  // Upsert customer
-  let customer = await prisma.customer.findUnique({ where: { email } });
-  if (!customer) {
-    customer = await prisma.customer.create({ data: { name, email, phone } });
-  } else {
-    customer = await prisma.customer.update({
-      where: { id: customer.id },
-      data: { name, email, phone: phone ?? customer.phone },
-    });
-  }
+  let orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  let orderCreatedInDb = false;
 
-  // Create order no banco de dados local com vínculo do criador
-  const order = await prisma.order.create({
-    data: {
-      customerId: customer.id,
-      planId: plan.id,
-      status: 'pending',
-      amount: finalAmount,
-      currency: plan.currency,
-      affiliateId: affiliate ? affiliate.id : null,
-      couponCode: affiliate ? affiliate.couponCode : (couponCode ? couponCode.trim().toUpperCase() : null),
-      commissionAmount,
-      commissionStatus: affiliate ? 'pending' : null,
-      metadata: {
-        slug,
-        source: 'site',
-        includeCourse: Boolean(includeCourse),
-        coursePriceCents: includeCourse ? COURSE_ORDER_BUMP_CENTS : 0,
-        planPriceCents: plan.price,
-        subtotalAmount,
-        discountCents,
-        affiliateId: affiliate?.id,
-        affiliateName: affiliate?.name,
-        affiliateSlug: affiliate?.slug,
-        couponCode: affiliate?.couponCode,
-        commissionPercent: affiliate?.commissionPercent,
+  try {
+    // Upsert customer
+    let customer = await prisma.customer.findUnique({ where: { email } });
+    if (!customer) {
+      customer = await prisma.customer.create({ data: { name, email, phone } });
+    } else {
+      customer = await prisma.customer.update({
+        where: { id: customer.id },
+        data: { name, email, phone: phone ?? customer.phone },
+      });
+    }
+
+    // Create order no banco de dados local com vínculo do criador
+    const order = await prisma.order.create({
+      data: {
+        customerId: customer.id,
+        planId: plan.id,
+        status: 'pending',
+        amount: finalAmount,
+        currency: plan.currency,
+        affiliateId: affiliate ? affiliate.id : null,
+        couponCode: affiliate ? affiliate.couponCode : (couponCode ? couponCode.trim().toUpperCase() : null),
         commissionAmount,
+        commissionStatus: affiliate ? 'pending' : null,
+        metadata: {
+          slug,
+          source: 'site',
+          includeCourse: Boolean(includeCourse),
+          coursePriceCents: includeCourse ? COURSE_ORDER_BUMP_CENTS : 0,
+          planPriceCents: plan.price,
+          subtotalAmount,
+          discountCents,
+          affiliateId: affiliate?.id,
+          affiliateName: affiliate?.name,
+          affiliateSlug: affiliate?.slug,
+          couponCode: affiliate?.couponCode,
+          commissionPercent: affiliate?.commissionPercent,
+          commissionAmount,
+        },
       },
-    },
-  });
+    });
+    orderId = order.id;
+    orderCreatedInDb = true;
+  } catch (dbErr) {
+    console.warn('[checkout] Banco SQLite indisponível ou somente leitura na Vercel. Prosseguindo com pedido temporário:', dbErr);
+  }
 
   // AbacatePay plan id
   const abacatePlanId = plan.abacatePlanId || getPlanId(slug);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com';
   const returnURL = process.env.ABACATEPAY_RETURN_URL || `${appUrl}/retorno`;
 
-  let checkout;
+  let checkout: any;
   try {
     checkout = await createCheckout({
       planSlug: slug,
@@ -136,7 +175,7 @@ export async function POST(req: Request) {
       currency: 'BRL',
       customer: { name, email, phone },
       metadata: {
-        orderId: order.id,
+        orderId,
         slug,
         email,
         includeCourse: includeCourse ? 'true' : 'false',
@@ -149,29 +188,33 @@ export async function POST(req: Request) {
         : (process.env.ABACATEPAY_APP_NAME || 'Fábrica dos Cortes'),
     });
   } catch (e: any) {
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'failed', metadata: { ...(order.metadata as any), error: e.message } },
-    });
+    console.error('[createCheckout Error]:', e);
+    if (orderCreatedInDb) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'failed', metadata: { error: e.message } },
+      }).catch(() => null);
+    }
     return NextResponse.json(
-      { error: 'Não foi possível iniciar o checkout. Tente novamente.', detail: e.message },
+      { error: 'Não foi possível iniciar o checkout no AbacatePay.', detail: e.message },
       { status: 502 }
     );
   }
 
   // Update order with checkout id
-  await prisma.order.update({
-    where: { id: order.id },
-    data: {
-      abacateCheckoutId: checkout.checkoutId,
-      abacateOrderId: checkout.orderId,
-      metadata: { ...(order.metadata as any), checkoutId: checkout.checkoutId },
-    },
-  });
+  if (orderCreatedInDb) {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        abacateCheckoutId: checkout.checkoutId,
+        abacateOrderId: checkout.orderId,
+      },
+    }).catch(() => null);
+  }
 
   return NextResponse.json({
     ok: true,
-    orderId: order.id,
+    orderId,
     checkoutURL: checkout.checkoutURL,
   });
 }

@@ -128,17 +128,27 @@ function RecargaForm() {
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error('Resposta não-JSON do servidor:', parseErr);
+        setError('Erro no servidor ao processar recarga. Tente novamente.');
+        return;
+      }
+
       if (!res.ok) {
-        setError(data.error || 'Erro ao gerar Pix de recarga.');
+        const errorMsg = data.detail ? `${data.error} (${data.detail})` : (data.error || 'Erro ao gerar Pix de recarga.');
+        setError(errorMsg);
         return;
       }
 
       if (data.checkoutURL) {
         window.location.href = data.checkoutURL;
       }
-    } catch {
-      setError('Falha de conexão ao gerar recarga.');
+    } catch (err: any) {
+      console.error('Erro de rede na recarga:', err);
+      setError('Falha de conexão com o servidor ao gerar recarga.');
     } finally {
       setLoading(false);
     }

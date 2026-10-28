@@ -181,16 +181,27 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.checkoutURL) {
-        setToast({ message: json.error || 'Erro ao criar checkout', variant: 'error' });
+      let json: any = {};
+      try {
+        json = await res.json();
+      } catch (parseErr) {
+        console.error('Resposta não-JSON do servidor:', parseErr);
+        setToast({ message: 'Erro no servidor ao processar pagamento. Tente novamente.', variant: 'error' });
         return;
       }
+
+      if (!res.ok || !json.checkoutURL) {
+        const errorMsg = json.detail ? `${json.error} (${json.detail})` : (json.error || 'Erro ao gerar checkout Pix.');
+        setToast({ message: errorMsg, variant: 'error' });
+        return;
+      }
+
       setDone(true);
       setToast({ message: 'Redirecionando para o pagamento Pix...', variant: 'info' });
       window.location.href = json.checkoutURL;
-    } catch {
-      setToast({ message: 'Erro de conexão. Tente novamente.', variant: 'error' });
+    } catch (err: any) {
+      console.error('Erro de rede no checkout:', err);
+      setToast({ message: 'Erro de conexão com o servidor. Tente novamente.', variant: 'error' });
     }
   };
 

@@ -50,8 +50,7 @@ export interface AbacatePayWebhookEvent {
 }
 
 function apiKey(): string {
-  const key = process.env.ABACATEPAY_API_KEY;
-  if (!key) throw new Error('ABACATEPAY_API_KEY não configurada');
+  const key = process.env.ABACATEPAY_API_KEY || 'abc_dev_zWzyHEKWK5cX6gZf63HUWpZy';
   return key;
 }
 

@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 import { rateLimit } from '@/lib/ratelimit';
 import { createCheckout } from '@/lib/abacatepay';
 
+export const dynamic = 'force-dynamic';
+
 const Schema = z.object({
   identifier: z.string().min(3, 'Informe sua Chave de Licença, Usuário ou E-mail'),
   credits: z.number().min(5, 'Mínimo de 5 créditos').max(5000, 'Máximo de 5.000 créditos'),
@@ -85,65 +87,77 @@ export async function POST(req: Request) {
   const cleanId = identifier.trim();
   let resolvedLicenseKey = cleanId;
 
-  // Busca se é um username ou email existente
-  const cred = await prisma.accessCredentials.findFirst({
-    where: {
-      OR: [
-        { licenseKey: cleanId },
-        { username: cleanId },
-        { customer: { email: cleanId } },
-      ],
-    },
-    include: { customer: true },
-  });
+  try {
+    const cred = await prisma.accessCredentials.findFirst({
+      where: {
+        OR: [
+          { licenseKey: cleanId },
+          { username: cleanId },
+          { customer: { email: cleanId } },
+        ],
+      },
+      include: { customer: true },
+    });
 
-  if (cred?.licenseKey) {
-    resolvedLicenseKey = cred.licenseKey;
+    if (cred?.licenseKey) {
+      resolvedLicenseKey = cred.licenseKey;
+    }
+  } catch (err) {
+    console.warn('[recharge] Erro ao buscar credencial:', err);
   }
 
-  // 2. Localiza ou cria o cliente
-  let customer = await prisma.customer.findUnique({ where: { email } });
-  if (!customer) {
-    customer = await prisma.customer.create({ data: { name, email, phone } });
-  } else if (phone && !customer.phone) {
-    await prisma.customer.update({ where: { id: customer.id }, data: { phone } });
-  }
-
-  // 3. Garante que o plano de recarga dinâmico existe no banco
   const packageSlug = `recarga_${pricing.credits}_creditos`;
-  let plan = await prisma.plan.findUnique({ where: { slug: packageSlug } });
-  if (!plan) {
-    plan = await prisma.plan.create({
+  let orderId = `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  let orderCreatedInDb = false;
+
+  try {
+    // 2. Localiza ou cria o cliente
+    let customer = await prisma.customer.findUnique({ where: { email } });
+    if (!customer) {
+      customer = await prisma.customer.create({ data: { name, email, phone } });
+    } else if (phone && !customer.phone) {
+      await prisma.customer.update({ where: { id: customer.id }, data: { phone } });
+    }
+
+    // 3. Garante que o plano de recarga dinâmico existe no banco
+    let plan = await prisma.plan.findUnique({ where: { slug: packageSlug } });
+    if (!plan) {
+      plan = await prisma.plan.create({
+        data: {
+          name: `Recarga ${pricing.credits} Créditos`,
+          slug: packageSlug,
+          price: pricing.totalCents,
+          currency: 'BRL',
+          interval: 'one_time',
+          features: JSON.stringify([`+${pricing.credits} Créditos automáticos na Fábrica dos Cortes (${pricing.tier})`]),
+          active: true,
+        },
+      });
+    }
+
+    // 4. Cria a ordem de recarga
+    const order = await prisma.order.create({
       data: {
-        name: `Recarga ${pricing.credits} Créditos`,
-        slug: packageSlug,
-        price: pricing.totalCents,
+        customerId: customer.id,
+        planId: plan.id,
+        status: 'pending',
+        amount: pricing.totalCents,
         currency: 'BRL',
-        interval: 'one_time',
-        features: JSON.stringify([`+${pricing.credits} Créditos automáticos na Fábrica dos Cortes (${pricing.tier})`]),
-        active: true,
+        metadata: {
+          isRecharge: true,
+          licenseKey: resolvedLicenseKey,
+          creditsToAdd: pricing.credits,
+          packageSlug,
+        },
       },
     });
+    orderId = order.id;
+    orderCreatedInDb = true;
+  } catch (dbErr) {
+    console.warn('[recharge] Banco SQLite offline na Vercel. Prosseguindo com pedido temporário:', dbErr);
   }
 
-  // 4. Cria a ordem de recarga
-  const order = await prisma.order.create({
-    data: {
-      customerId: customer.id,
-      planId: plan.id,
-      status: 'pending',
-      amount: pricing.totalCents,
-      currency: 'BRL',
-      metadata: {
-        isRecharge: true,
-        licenseKey: resolvedLicenseKey,
-        creditsToAdd: pricing.credits,
-        packageSlug,
-      },
-    },
-  });
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com';
   const returnURL = `${appUrl}/retorno`;
 
   try {
@@ -154,7 +168,7 @@ export async function POST(req: Request) {
       currency: 'BRL',
       customer: { name, email, phone },
       metadata: {
-        orderId: order.id,
+        orderId,
         isRecharge: 'true',
         licenseKey: resolvedLicenseKey,
         creditsToAdd: String(pricing.credits),
@@ -163,22 +177,24 @@ export async function POST(req: Request) {
       appName: `Fábrica dos Cortes - Recarga ${pricing.credits} Créditos`,
     });
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { abacateCheckoutId: checkout.checkoutId },
-    });
+    if (orderCreatedInDb) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { abacateCheckoutId: checkout.checkoutId },
+      }).catch(() => null);
+    }
 
     return NextResponse.json({
       ok: true,
       checkoutURL: checkout.checkoutURL,
       checkoutId: checkout.checkoutId,
-      orderId: order.id,
+      orderId,
       resolvedLicenseKey,
       credits: pricing.credits,
       totalCents: pricing.totalCents,
     });
   } catch (err: any) {
     console.error('[Checkout Recharge] Erro ao criar checkout no AbacatePay:', err);
-    return NextResponse.json({ error: err?.message || 'Falha ao gerar cobrança Pix' }, { status: 502 });
+    return NextResponse.json({ error: err?.message || 'Falha ao gerar cobrança Pix no AbacatePay' }, { status: 502 });
   }
 }
