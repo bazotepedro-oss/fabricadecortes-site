@@ -29,14 +29,15 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
     });
 
     if (!res.ok) {
-      console.warn('[Sync AbacatePay] Resposta da API:', res.status, res.statusText);
-      return { synced: 0, processed: [] };
+      const errText = await res.text().catch(() => '');
+      return { synced: 0, processed: [], error: `AbacatePay HTTP ${res.status}: ${errText}` } as any;
     }
 
     const json = await res.json();
     const checkouts = json.data || [];
 
     const processed: string[] = [];
+    const debugInfo: any[] = [];
     const [railwayLicenses, deletedEmails, hostgatorStudents] = await Promise.all([
       listLicensesFromServer().catch(() => []),
       syncListDeletedStudents().catch(() => new Set<string>()),
@@ -242,9 +243,15 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       }
     }
 
-    return { synced: processed.length, processed };
+    return {
+      synced: processed.length,
+      processed,
+      totalCheckouts: checkouts.length,
+      deletedEmails: Array.from(deletedEmails),
+      railwayLicensesCount: railwayLicenses.length,
+    } as any;
   } catch (err: any) {
     console.error('[Sync AbacatePay] Erro geral ao sincronizar:', err?.message);
-    return { synced: 0, processed: [] };
+    return { synced: 0, processed: [], error: err?.message || String(err) } as any;
   }
 }
