@@ -72,7 +72,7 @@ export function membersUrl(): string {
   return (
     process.env.NEXT_PUBLIC_MEMBERS_URL ||
     process.env.MEMBERS_URL ||
-    'http://localhost:8080/index.php'
+    'https://membros.fabricadecortes.com/index.php'
   );
 }
 

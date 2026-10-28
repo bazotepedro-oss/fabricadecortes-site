@@ -10,7 +10,7 @@ export function getMembersApiUrl(): string {
   if (process.env.MEMBERS_API_URL) {
     return process.env.MEMBERS_API_URL;
   }
-  const membersUrl = process.env.MEMBERS_URL || process.env.NEXT_PUBLIC_MEMBERS_URL || 'http://127.0.0.1:8080/index.php';
+  const membersUrl = process.env.MEMBERS_URL || process.env.NEXT_PUBLIC_MEMBERS_URL || 'https://membros.fabricadecortes.com/index.php';
   return membersUrl.replace(/\/index\.php$/i, '/api.php');
 }
 
