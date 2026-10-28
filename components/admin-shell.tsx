@@ -37,8 +37,10 @@ import {
   Eye,
   EyeOff,
   Lock,
+  UserPlus,
 } from 'lucide-react';
 import type { RailwayLicense } from '@/lib/license-server';
+import { GrantAccessModal } from './grant-access-modal';
 
 // ── Types (mirrored from Prisma) ──────────────────────────────────────────────
 
@@ -204,7 +206,13 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-function RailwayLicensesPanel({ licenses }: { licenses: RailwayLicense[] }) {
+function RailwayLicensesPanel({
+  licenses,
+  onOpenGrantModal,
+}: {
+  licenses: RailwayLicense[];
+  onOpenGrantModal?: () => void;
+}) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [q, setQ] = useState('');
@@ -403,10 +411,22 @@ function RailwayLicensesPanel({ licenses }: { licenses: RailwayLicense[] }) {
             className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-border rounded-lg text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-brand"
           />
         </div>
-        <Button onClick={() => setShowCreate(!showCreate)} size="sm">
-          <PlusCircle className="w-4 h-4 mr-1.5" />
-          {showCreate ? 'Fechar Formulário' : '+ Criar Nova Chave'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {onOpenGrantModal && (
+            <Button
+              onClick={onOpenGrantModal}
+              size="sm"
+              className="bg-gradient-to-r from-orange-600 via-brand to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold"
+            >
+              <UserPlus className="w-4 h-4 mr-1.5" />
+              + Liberar Acesso & Enviar Login
+            </Button>
+          )}
+          <Button onClick={() => setShowCreate(!showCreate)} size="sm" variant="secondary">
+            <PlusCircle className="w-4 h-4 mr-1.5" />
+            {showCreate ? 'Fechar' : '+ Chave Direta'}
+          </Button>
+        </div>
       </div>
 
       {/* Formulário de criação de chave */}
@@ -771,7 +791,13 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
   );
 }
 
-function CustomersPanel({ customers }: { customers: Customer[] }) {
+function CustomersPanel({
+  customers,
+  onOpenGrantModal,
+}: {
+  customers: Customer[];
+  onOpenGrantModal?: () => void;
+}) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [q, setQ] = useState('');
@@ -996,6 +1022,16 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
           <span className="text-xs text-text-secondary">
             Clientes: <strong className="text-text-primary">{filtered.length}</strong>
           </span>
+          {onOpenGrantModal && (
+            <Button
+              size="sm"
+              onClick={onOpenGrantModal}
+              className="text-xs h-8 bg-gradient-to-r from-orange-600 via-brand to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold"
+            >
+              <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+              + Liberar Acesso VIP
+            </Button>
+          )}
           <Button
             variant="danger"
             size="sm"
@@ -2316,6 +2352,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const [activeTab, setActiveTab] = useState<TabId>('affiliates');
   const [syncing, setSyncing] = useState(false);
+  const [showGrantModal, setShowGrantModal] = useState(false);
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -2342,8 +2379,18 @@ export function AdminShell({
 
   const panels: Record<TabId, React.ReactNode> = {
     affiliates: <AffiliatesPanel affiliates={affiliates || []} />,
-    customers: <CustomersPanel customers={customers} />,
-    licenses: <RailwayLicensesPanel licenses={railwayLicenses || []} />,
+    customers: (
+      <CustomersPanel
+        customers={customers}
+        onOpenGrantModal={() => setShowGrantModal(true)}
+      />
+    ),
+    licenses: (
+      <RailwayLicensesPanel
+        licenses={railwayLicenses || []}
+        onOpenGrantModal={() => setShowGrantModal(true)}
+      />
+    ),
     orders: <OrdersPanel orders={orders} />,
     subscriptions: <SubscriptionsPanel subscriptions={subscriptions} />,
     credentials: <CredentialsPanel credentials={credentials} />,
@@ -2385,6 +2432,14 @@ export function AdminShell({
             <span className="text-text-secondary text-sm font-semibold">Painel Admin & CRM</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setShowGrantModal(true)}
+              className="text-xs h-8 bg-gradient-to-r from-orange-600 via-brand to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-bold shadow-md shadow-brand/20 border border-brand/40"
+            >
+              <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+              + Liberar Acesso & Enviar Login
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -2453,6 +2508,14 @@ export function AdminShell({
           <div className="min-h-[400px]">{panels[activeTab]}</div>
         </section>
       </main>
+
+      <GrantAccessModal
+        open={showGrantModal}
+        onClose={() => setShowGrantModal(false)}
+        onSuccess={() => {
+          startTransition(() => router.refresh());
+        }}
+      />
     </div>
   );
 }
