@@ -30,13 +30,27 @@ export async function POST(req: Request) {
   }
 
   try {
-    const customer = await prisma.customer.findFirst({
+    let customer = await prisma.customer.findFirst({
       where: customerId ? { id: customerId } : { email },
       include: {
         credentials: { orderBy: { createdAt: 'desc' } },
         orders: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
       },
     });
+
+    if (!customer) {
+      // Tenta sincronizar com a AbacatePay caso este container ainda não tenha sincronizado
+      const { syncAbacatePay } = await import('@/lib/sync-abacatepay');
+      await syncAbacatePay().catch(() => null);
+
+      customer = await prisma.customer.findFirst({
+        where: customerId ? { id: customerId } : { email },
+        include: {
+          credentials: { orderBy: { createdAt: 'desc' } },
+          orders: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
+        },
+      });
+    }
 
     if (!customer) {
       return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
