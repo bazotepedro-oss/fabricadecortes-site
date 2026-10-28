@@ -1854,7 +1854,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
       <div className="rounded-xl border border-white/10 bg-surface overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-text-secondary text-xs">
-            Nenhum parceiro encontrado. Clique em "+ Cadastrar Novo Parceiro" para adicionar o primeiro YouTuber!
+            Nenhum parceiro encontrado. Clique em &quot;+ Cadastrar Novo Parceiro&quot; para adicionar o primeiro YouTuber!
           </div>
         ) : (
           <div className="overflow-x-auto">
