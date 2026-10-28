@@ -689,13 +689,13 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
     }
   }
 
-  async function deleteOrder(orderId: string) {
+  async function deleteOrder(orderId: string, checkoutId?: string | null, email?: string) {
     if (!window.confirm('Tem certeza que deseja excluir este pedido? As credenciais associadas também serão removidas.')) return;
     try {
       const res = await fetch('/api/admin/orders/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, checkoutId, email }),
       });
       if (res.ok) startTransition(() => router.refresh());
     } catch {
@@ -760,7 +760,7 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteOrder(o.id)}
+                    onClick={() => deleteOrder(o.id, o.abacateCheckoutId, o.customer?.email)}
                     className="text-text-secondary hover:text-error hover:bg-error/10 p-1.5 h-auto text-xs"
                     title="Excluir pedido"
                   >
@@ -983,7 +983,7 @@ function CustomersPanel({
     }
   }
 
-  async function handleDeleteCustomer(customerId: string, customerName: string) {
+  async function handleDeleteCustomer(customerId: string, customerName: string, customerEmail?: string, licenseKey?: string) {
     if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM? Todos os pedidos, assinaturas, credenciais e licença do Railway serão excluídos.`)) {
       return;
     }
@@ -991,7 +991,7 @@ function CustomersPanel({
       const res = await fetch('/api/admin/customers/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId }),
+        body: JSON.stringify({ customerId, email: customerEmail, licenseKey }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -1504,7 +1504,7 @@ function CustomersPanel({
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDeleteCustomer(c.id, c.name)}
+                          onClick={() => handleDeleteCustomer(c.id, c.name, c.email, c.credentials?.[0]?.licenseKey)}
                           className="text-xs h-7 px-2"
                           title="Remover cliente do CRM"
                         >
@@ -1560,13 +1560,13 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
     }
   }
 
-  async function deleteCred(credId: string) {
+  async function deleteCred(credId: string, licenseKey?: string | null) {
     if (!window.confirm('Tem certeza que deseja excluir esta credencial? A licença vinculada no Railway também será removida.')) return;
     try {
       const res = await fetch('/api/admin/credentials/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credId }),
+        body: JSON.stringify({ credId, licenseKey }),
       });
       if (res.ok) startTransition(() => router.refresh());
     } catch {
@@ -1708,7 +1708,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
                         variant="ghost"
                         size="sm"
                         disabled={!!working}
-                        onClick={() => deleteCred(c.id)}
+                        onClick={() => deleteCred(c.id, c.licenseKey)}
                         className="text-xs h-7 px-2 text-text-secondary hover:text-error hover:bg-error/10"
                         title="Excluir credencial e licença"
                       >

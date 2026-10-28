@@ -85,10 +85,11 @@ export async function syncDeleteStudent(email: string): Promise<boolean> {
 }
 
 /**
- * Lista todos os e-mails de alunos excluídos persistentemente na Área de Membros com a data de exclusão
+ * Lista todos os e-mails e checkouts excluídos persistentemente na Área de Membros
  */
 export async function syncListDeletedStudents(): Promise<{
   deleted: { email: string; excluido_em?: string }[];
+  deletedCheckouts: string[];
   clearedAt: string | null;
 }> {
   try {
@@ -108,11 +109,39 @@ export async function syncListDeletedStudents(): Promise<{
             : { email: String(d.email || '').toLowerCase().trim(), excluido_em: d.excluido_em }
         )
       : [];
+    const deletedCheckouts = Array.isArray(data?.deleted_checkouts)
+      ? data.deleted_checkouts.map((id: any) => String(id).trim())
+      : [];
     const clearedAt = data?.cleared_at ? String(data.cleared_at) : null;
-    return { deleted, clearedAt };
+    return { deleted, deletedCheckouts, clearedAt };
   } catch (err: any) {
     console.warn(`[MembersSync] Falha ao listar alunos excluídos:`, err?.message);
-    return { deleted: [], clearedAt: null };
+    return { deleted: [], deletedCheckouts: [], clearedAt: null };
+  }
+}
+
+/**
+ * Registra a exclusão definitiva de um pedido/checkout na HostGator
+ */
+export async function syncDeleteCheckout(checkoutId: string): Promise<boolean> {
+  if (!checkoutId) return false;
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(`${apiUrl}?action=admin_delete_checkout`, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({
+        secret: ADMIN_SECRET,
+        checkout_id: checkoutId.trim(),
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    return Boolean(res.ok && data?.success);
+  } catch (err: any) {
+    console.warn(`[MembersSync] Erro ao registrar exclusão do checkout ${checkoutId}:`, err?.message);
+    return false;
   }
 }
 

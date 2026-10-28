@@ -84,8 +84,15 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       }
     }
 
+    const deletedCheckoutsSet = new Set<string>(deletedInfo.deletedCheckouts || []);
+
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
+
+      // 0. Se o checkout específico foi excluído individualmente pelo admin, ignora
+      if (deletedCheckoutsSet.has(c.id)) {
+        continue;
+      }
 
       const meta = c.metadata || {};
       const customerEmail = (meta.email || '').toLowerCase().trim();

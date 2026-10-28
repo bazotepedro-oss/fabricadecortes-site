@@ -11,9 +11,9 @@ export async function POST(req: Request) {
 
   try {
     // Remove credenciais associadas à assinatura
-    await prisma.accessCredentials.deleteMany({ where: { subscriptionId } });
+    await prisma.accessCredentials.deleteMany({ where: { subscriptionId } }).catch(() => null);
     // Remove a assinatura
-    await prisma.subscription.delete({ where: { id: subscriptionId } });
+    await prisma.subscription.deleteMany({ where: { id: subscriptionId } }).catch(() => null);
 
     return NextResponse.json({ ok: true, message: 'Assinatura excluída com sucesso' });
   } catch (err: any) {

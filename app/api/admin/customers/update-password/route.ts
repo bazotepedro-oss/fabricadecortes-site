@@ -25,44 +25,86 @@ export async function POST(req: Request) {
   }
 
   try {
-    const customer = await prisma.customer.findFirst({
-      where: customerId ? { id: customerId } : { email: email! },
+    let customer = await prisma.customer.findFirst({
+      where: {
+        OR: [
+          ...(email ? [{ email }] : []),
+          ...(customerId ? [{ id: customerId }] : []),
+        ],
+      },
       include: { credentials: true },
-    });
+    }).catch(() => null);
 
     if (!customer) {
-      return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
+      // 1. Tenta hidratar via AbacatePay se este container ainda não sincronizou
+      const { syncAbacatePay } = await import('@/lib/sync-abacatepay');
+      await syncAbacatePay().catch(() => null);
+
+      customer = await prisma.customer.findFirst({
+        where: {
+          OR: [
+            ...(email ? [{ email }] : []),
+            ...(customerId ? [{ id: customerId }] : []),
+          ],
+        },
+        include: { credentials: true },
+      }).catch(() => null);
+    }
+
+    const targetEmail = customer?.email || email;
+    if (!targetEmail) {
+      return NextResponse.json({ error: 'Informe o e-mail ou selecione um cliente válido' }, { status: 400 });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
+    const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.fabricadecortes.com').replace(/\/$/, '');
 
-    // Atualiza credenciais no Prisma
-    if (customer.credentials && customer.credentials.length > 0) {
-      await prisma.accessCredentials.updateMany({
-        where: { customerId: customer.id },
+    // 2. Se o cliente não existir no Prisma local mas tiver e-mail, cria para manter sincronizado
+    if (!customer) {
+      const name = body.name || targetEmail.split('@')[0];
+      customer = await prisma.customer.create({
         data: {
-          passwordHash,
-          plainPassword: newPassword,
-          updatedAt: new Date(),
+          name,
+          email: targetEmail,
+          credentials: {
+            create: {
+              username: targetEmail.split('@')[0],
+              passwordHash,
+              plainPassword: newPassword,
+              accessUrl: `${base}/acesso`,
+              status: 'active',
+            },
+          },
         },
-      });
+        include: { credentials: true },
+      }).catch(() => null);
     } else {
-      // Se não tinha credencial criada ainda, cria uma nova
-      const base = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-      await prisma.accessCredentials.create({
-        data: {
-          customerId: customer.id,
-          username: customer.email.split('@')[0],
-          passwordHash,
-          plainPassword: newPassword,
-          accessUrl: `${base}/acesso`,
-          status: 'active',
-        },
-      });
+      // Atualiza credenciais no Prisma
+      if (customer.credentials && customer.credentials.length > 0) {
+        await prisma.accessCredentials.updateMany({
+          where: { customerId: customer.id },
+          data: {
+            passwordHash,
+            plainPassword: newPassword,
+            updatedAt: new Date(),
+          },
+        }).catch(() => null);
+      } else {
+        await prisma.accessCredentials.create({
+          data: {
+            customerId: customer.id,
+            username: customer.email.split('@')[0],
+            passwordHash,
+            plainPassword: newPassword,
+            accessUrl: `${base}/acesso`,
+            status: 'active',
+          },
+        }).catch(() => null);
+      }
     }
 
-    // Sincroniza com a Área de Membros (HostGator)
-    const membersSynced = await syncSetStudentPassword(customer.email, newPassword);
+    // 3. Sincroniza com a Área de Membros (HostGator)
+    const membersSynced = await syncSetStudentPassword(targetEmail, newPassword);
 
     return NextResponse.json({
       ok: true,
