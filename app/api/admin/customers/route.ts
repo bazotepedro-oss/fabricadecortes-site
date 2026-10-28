@@ -7,10 +7,29 @@ export async function GET() {
   const admin = await verifyAdminRequest();
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const customers = await prisma.customer.findMany({
-    include: { _count: { select: { orders: true } } },
+  let customers = await prisma.customer.findMany({
+    include: {
+      orders: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
+      credentials: { orderBy: { createdAt: 'desc' } },
+      _count: { select: { orders: true } },
+    },
     orderBy: { createdAt: 'desc' },
     take: 200,
   });
+
+  if (customers.length === 0) {
+    const { syncAbacatePay } = await import('@/lib/sync-abacatepay');
+    await syncAbacatePay().catch(() => null);
+    customers = await prisma.customer.findMany({
+      include: {
+        orders: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
+        credentials: { orderBy: { createdAt: 'desc' } },
+        _count: { select: { orders: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+  }
+
   return NextResponse.json({ customers });
 }
