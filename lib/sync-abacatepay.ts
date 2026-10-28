@@ -105,12 +105,6 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
         continue;
       }
 
-      // 2. Se este cliente foi excluído e o checkout ocorreu antes ou na data da exclusão, ignora o pedido antigo
-      const deletedAt = deletedAtMap.get(customerEmail);
-      if (deletedAt && checkoutDate <= deletedAt) {
-        continue;
-      }
-
       try {
         let order: any = null;
         try {

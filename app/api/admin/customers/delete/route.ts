@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { syncDeleteStudent } from '@/lib/members-sync';
+import { syncDeleteStudent, syncDeleteCheckout } from '@/lib/members-sync';
 import { deleteLicenseOnServer } from '@/lib/license-server';
 
 export async function POST(req: Request) {
@@ -57,7 +57,16 @@ export async function POST(req: Request) {
       )
     );
 
-    // 3. Remove credenciais, assinaturas, pedidos e cliente do banco local usando deleteMany (não falha)
+    // 3. Registra os checkouts específicos deste cliente para não ressuscitarem em sync manual
+    if (customer?.orders?.length) {
+      for (const ord of customer.orders) {
+        if (ord.abacateCheckoutId) {
+          await syncDeleteCheckout(ord.abacateCheckoutId).catch(() => null);
+        }
+      }
+    }
+
+    // 4. Remove credenciais, assinaturas, pedidos e cliente do banco local usando deleteMany (não falha)
     if (customer?.id || customerId) {
       const cid = customer?.id || customerId;
       await prisma.accessCredentials.deleteMany({ where: { customerId: cid } }).catch(() => null);
@@ -71,8 +80,8 @@ export async function POST(req: Request) {
         await prisma.accessCredentials.deleteMany({ where: { customerId: byEmail.id } }).catch(() => null);
         await prisma.subscription.deleteMany({ where: { customerId: byEmail.id } }).catch(() => null);
         await prisma.order.deleteMany({ where: { customerId: byEmail.id } }).catch(() => null);
-        await prisma.customer.deleteMany({ where: { id: byEmail.id } }).catch(() => null);
       }
+      await prisma.customer.deleteMany({ where: { email: targetEmail } }).catch(() => null);
     }
 
     // 4. Registra no AuditLog local

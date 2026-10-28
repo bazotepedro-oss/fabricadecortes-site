@@ -13,8 +13,8 @@ export async function POST() {
     const existingCustomers = await prisma.customer.findMany({ select: { email: true } }).catch(() => []);
     const emails = existingCustomers.map((c) => c.email.toLowerCase().trim()).filter(Boolean);
 
-    // 1. Limpa alunos da Área de Membros (HostGator), salva crm_cleared_at e inclui e-mails na blacklist
-    await syncClearStudents(emails).catch((e) =>
+    // 1. Limpa alunos da Área de Membros (HostGator) e salva crm_cleared_at
+    await syncClearStudents().catch((e) =>
       console.warn('[Clear CRM] Falha ao limpar Área de Membros:', e)
     );
 
