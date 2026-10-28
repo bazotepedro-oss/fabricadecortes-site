@@ -6,11 +6,8 @@ dist
 build
 
 # Prisma
-prisma/dev.db
-prisma/dev.db-journal
-prisma/migrations/
-dev.db
-dev.db-journal
+prisma/*.db-journal
+*.db-journal
 *-err.txt
 *-out.txt
 tsconfig.tsbuildinfo

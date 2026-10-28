@@ -24,8 +24,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
   await syncAbacatePay().catch((err) => console.error('Erro na auto-sincronização:', err));
 
   const [orders, subscriptions, customers, credentials, events, railwayLicenses, affiliates] = await Promise.all([
-    prisma.order.findMany({ include: { customer: true, plan: true }, orderBy: { createdAt: 'desc' }, take: 50 }),
-    prisma.subscription.findMany({ include: { customer: true, plan: true }, orderBy: { createdAt: 'desc' }, take: 50 }),
+    prisma.order.findMany({ include: { customer: true, plan: true }, orderBy: { createdAt: 'desc' }, take: 50 }).catch((e) => { console.warn('[Admin] Erro ao carregar pedidos:', e); return []; }),
+    prisma.subscription.findMany({ include: { customer: true, plan: true }, orderBy: { createdAt: 'desc' }, take: 50 }).catch((e) => { console.warn('[Admin] Erro ao carregar assinaturas:', e); return []; }),
     prisma.customer.findMany({
       include: {
         orders: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
@@ -33,10 +33,10 @@ export default async function AdminPage({ searchParams }: PageProps) {
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
-    }),
-    prisma.accessCredentials.findMany({ include: { customer: true, order: true }, orderBy: { createdAt: 'desc' }, take: 50 }),
-    prisma.webhookEvent.findMany({ orderBy: { createdAt: 'desc' }, take: 50 }),
-    listLicensesFromServer(),
+    }).catch((e) => { console.warn('[Admin] Erro ao carregar clientes:', e); return []; }),
+    prisma.accessCredentials.findMany({ include: { customer: true, order: true }, orderBy: { createdAt: 'desc' }, take: 50 }).catch((e) => { console.warn('[Admin] Erro ao carregar credenciais:', e); return []; }),
+    prisma.webhookEvent.findMany({ orderBy: { createdAt: 'desc' }, take: 50 }).catch((e) => { console.warn('[Admin] Erro ao carregar webhooks:', e); return []; }),
+    listLicensesFromServer().catch((e) => { console.warn('[Admin] Erro ao carregar licenças Railway:', e); return []; }),
     prisma.affiliate.findMany({
       include: {
         orders: {
@@ -54,7 +54,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
         },
       },
       orderBy: { createdAt: 'desc' },
-    }),
+    }).catch((e) => { console.warn('[Admin] Erro ao carregar afiliados:', e); return []; }),
   ]);
 
   return (
