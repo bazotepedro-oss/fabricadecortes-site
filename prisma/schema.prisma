@@ -108,6 +108,7 @@ model AccessCredentials {
   subscriptionId String?
   username       String
   passwordHash   String?
+  plainPassword  String?
   accessTokenHash String?
   accessUrl      String
   railwayAppUrl  String?

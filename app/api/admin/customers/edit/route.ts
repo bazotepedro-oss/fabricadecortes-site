@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+import bcrypt from 'bcryptjs';
+import { syncSetStudentPassword } from '@/lib/members-sync';
+
 export async function POST(req: Request) {
   const auth = await verifyAdminRequest();
   if (!auth) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const { customerId, name, email, phone, licenseKey } = await req.json().catch(() => ({}));
+  const { customerId, name, email, phone, licenseKey, password } = await req.json().catch(() => ({}));
   if (!customerId) return NextResponse.json({ error: 'ID do cliente obrigatório' }, { status: 400 });
 
   try {
@@ -19,10 +22,21 @@ export async function POST(req: Request) {
       },
     });
 
+    const updateData: any = {};
     if (licenseKey) {
+      updateData.licenseKey = String(licenseKey).trim();
+    }
+    if (password && String(password).trim()) {
+      const cleanPass = String(password).trim();
+      updateData.plainPassword = cleanPass;
+      updateData.passwordHash = await bcrypt.hash(cleanPass, 10);
+      await syncSetStudentPassword(updated.email, cleanPass);
+    }
+
+    if (Object.keys(updateData).length > 0) {
       await prisma.accessCredentials.updateMany({
         where: { customerId },
-        data: { licenseKey: String(licenseKey).trim() },
+        data: updateData,
       });
     }
 

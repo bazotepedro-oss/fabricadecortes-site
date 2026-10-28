@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth';
 import { createLicenseOnServer, generateLicenseKey } from '@/lib/license-server';
 import { prisma } from '@/lib/db';
-import { courseUrl, colabUrl } from '@/lib/provisioning';
+import bcrypt from 'bcryptjs';
+import { courseUrl, colabUrl, generatePassword } from '@/lib/provisioning';
+import { syncAddStudent } from '@/lib/members-sync';
 
 export async function POST(req: Request) {
   const auth = await verifyAdminRequest();
@@ -50,6 +52,8 @@ export async function POST(req: Request) {
       });
     }
 
+    const password = (body.password || generatePassword(10)).trim();
+    const passwordHash = await bcrypt.hash(password, 10);
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     const base = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -57,6 +61,8 @@ export async function POST(req: Request) {
       data: {
         customerId: customer.id,
         username: email.split('@')[0],
+        passwordHash,
+        plainPassword: password,
         licenseKey,
         credits,
         courseUrl: courseUrl(),
@@ -65,6 +71,17 @@ export async function POST(req: Request) {
         expiresAt,
       },
     });
+
+    // Sincroniza com a Área de Membros da HostGator
+    try {
+      await syncAddStudent({
+        name: customer.name,
+        email: customer.email,
+        password,
+      });
+    } catch (err: any) {
+      console.warn('[Admin Create License] Falha ao sincronizar com área de membros:', err?.message);
+    }
   }
 
   return NextResponse.json({

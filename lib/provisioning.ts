@@ -40,7 +40,7 @@ function generateUsername(email: string): string {
   return `${base}_${suffix}`;
 }
 
-function generatePassword(length = 12): string {
+export function generatePassword(length = 12): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#';
   let out = '';
   const bytes = randomBytes(length);
@@ -130,7 +130,7 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
     return {
       credentialId: existing.id,
       username: existing.username,
-      temporaryPassword: null,
+      temporaryPassword: existing.plainPassword || null,
       accessToken,
       accessUrl: existing.accessUrl || accessUrl,
       licenseKey: existing.licenseKey || 'FV-PENDING',
@@ -165,6 +165,7 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
       subscriptionId: input.subscriptionId,
       username,
       passwordHash,
+      plainPassword: temporaryPassword,
       accessTokenHash,
       accessUrl,
       railwayAppUrl: process.env.FORJA_LICENSE_SERVER_URL || 'https://forja-license-production.up.railway.app',

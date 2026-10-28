@@ -106,6 +106,37 @@ export async function syncToggleStudent(email: string, status: 'ativo' | 'bloque
 }
 
 /**
+ * Altera ou redefine a senha do aluno na Área de Membros
+ */
+export async function syncSetStudentPassword(email: string, novaSenha: string): Promise<boolean> {
+  if (!email || !novaSenha) return false;
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(`${apiUrl}?action=admin_set_password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: ADMIN_SECRET,
+        email: email.toLowerCase().trim(),
+        nova_senha: novaSenha,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success) {
+      console.log(`[MembersSync] Senha do aluno ${email} atualizada com sucesso na Área de Membros.`);
+      return true;
+    }
+    console.warn(`[MembersSync] Falha ao atualizar senha do aluno ${email}:`, data);
+    return false;
+  } catch (err: any) {
+    console.warn(`[MembersSync] Erro ao sincronizar nova senha de ${email}:`, err?.message);
+    return false;
+  }
+}
+
+/**
  * Limpa todos os alunos da Área de Membros (ao resetar todo o CRM)
  */
 export async function syncClearStudents(): Promise<boolean> {
@@ -127,3 +158,4 @@ export async function syncClearStudents(): Promise<boolean> {
     return false;
   }
 }
+

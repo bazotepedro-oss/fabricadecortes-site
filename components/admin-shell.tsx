@@ -34,6 +34,9 @@ import {
   Check,
   Tag,
   Gift,
+  Eye,
+  EyeOff,
+  Lock,
 } from 'lucide-react';
 import type { RailwayLicense } from '@/lib/license-server';
 
@@ -58,6 +61,7 @@ interface Customer {
   credentials?: {
     id: string;
     username: string;
+    plainPassword?: string | null;
     licenseKey?: string | null;
     credits?: number | null;
     status: string;
@@ -89,6 +93,7 @@ interface Subscription {
 interface Credential {
   id: string;
   username: string;
+  plainPassword?: string | null;
   accessUrl: string;
   railwayAppUrl?: string | null;
   licenseKey?: string | null;
@@ -774,12 +779,21 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
   const [msg, setMsg] = useState<{ key: string; text: string; ok: boolean } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Senhas de Alunos (Área de Membros & CRM)
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [copiedPass, setCopiedPass] = useState<string | null>(null);
+  const [passwordModalCustomer, setPasswordModalCustomer] = useState<Customer | null>(null);
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordFeedback, setPasswordFeedback] = useState<{ text: string; ok: boolean } | null>(null);
+
   // Edit state
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editLicenseKey, setEditLicenseKey] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [clearingCrm, setClearingCrm] = useState(false);
 
@@ -789,7 +803,51 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
     setEditEmail(c.email);
     setEditPhone(c.phone || '');
     setEditLicenseKey(c.credentials?.[0]?.licenseKey || '');
+    setEditPassword(c.credentials?.[0]?.plainPassword || '');
   }
+
+  function openPasswordModal(c: Customer) {
+    setPasswordModalCustomer(c);
+    setNewPasswordInput(c.credentials?.[0]?.plainPassword || 'membro' + Math.floor(1000 + Math.random() * 9000));
+    setPasswordFeedback(null);
+  }
+
+  async function handleSavePassword() {
+    if (!passwordModalCustomer || !newPasswordInput.trim()) return;
+    setSavingPassword(true);
+    setPasswordFeedback(null);
+    try {
+      const res = await fetch('/api/admin/customers/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: passwordModalCustomer.id,
+          email: passwordModalCustomer.email,
+          newPassword: newPasswordInput.trim(),
+        }),
+      });
+      const data = await res.json();
+      setPasswordFeedback({ text: data.message || (res.ok ? 'Senha atualizada!' : data.error), ok: res.ok });
+      if (res.ok) {
+        startTransition(() => router.refresh());
+        setTimeout(() => setPasswordModalCustomer(null), 1500);
+      }
+    } catch {
+      setPasswordFeedback({ text: 'Erro ao conectar ao servidor', ok: false });
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  const toggleShowPassword = (id: string) => {
+    setShowPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const copyPassword = (pass: string, id: string) => {
+    navigator.clipboard.writeText(pass);
+    setCopiedPass(id);
+    setTimeout(() => setCopiedPass(null), 2000);
+  };
 
   async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
@@ -805,6 +863,7 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
           email: editEmail,
           phone: editPhone,
           licenseKey: editLicenseKey || undefined,
+          password: editPassword || undefined,
         }),
       });
       if (res.ok) {
@@ -968,7 +1027,7 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
               Cancelar
             </Button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-5">
             <div>
               <label className="text-xs text-text-secondary block mb-1">Nome Completo</label>
               <input
@@ -1009,6 +1068,16 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
                 className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg text-text-primary font-mono uppercase"
               />
             </div>
+            <div>
+              <label className="text-xs text-text-secondary block mb-1">Senha (Área de Membros)</label>
+              <input
+                type="text"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Ex: membro123"
+                className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg text-text-primary font-mono"
+              />
+            </div>
           </div>
           <div className="flex justify-end pt-1">
             <Button type="submit" size="sm" disabled={savingEdit} className="text-xs font-bold">
@@ -1018,11 +1087,93 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
         </form>
       )}
 
+      {/* Modal Dedicado: Alterar Senha do Aluno */}
+      {passwordModalCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="bg-surface border border-brand/50 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base text-text-primary flex items-center gap-2">
+                <Lock className="w-5 h-5 text-brand" />
+                Alterar Senha do Aluno
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPasswordModalCustomer(null)}
+                className="text-text-secondary hover:text-text-primary text-sm p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Você está alterando a senha de <strong>{passwordModalCustomer.name}</strong> ({passwordModalCustomer.email}).
+              A nova senha será salva no CRM e sincronizada automaticamente na Área de Membros da HostGator.
+            </p>
+
+            <div>
+              <label className="text-xs text-text-secondary block mb-1.5 font-medium">Nova Senha de Acesso</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-text-primary font-mono"
+                  placeholder="Digite a nova senha..."
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setNewPasswordInput('membro' + Math.floor(1000 + Math.random() * 9000))}
+                  className="whitespace-nowrap text-xs"
+                >
+                  Gerar Aleatória
+                </Button>
+              </div>
+            </div>
+
+            {passwordFeedback && (
+              <div
+                className={`text-xs p-3 rounded-lg flex items-center gap-2 ${
+                  passwordFeedback.ok
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}
+              >
+                {passwordFeedback.text}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setPasswordModalCustomer(null)}
+                className="text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={savingPassword || !newPasswordInput.trim()}
+                onClick={handleSavePassword}
+                className="text-xs font-bold"
+              >
+                {savingPassword ? 'Salvando...' : 'Salvar e Sincronizar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 text-text-secondary text-xs uppercase tracking-wider">
               <th className="text-left py-3 px-4 font-medium">Cliente</th>
+              <th className="text-left py-3 px-4 font-medium">Acesso Aluno (Usuário / Senha)</th>
               <th className="text-left py-3 px-4 font-medium">WhatsApp / Contato</th>
               <th className="text-left py-3 px-4 font-medium">Chave de Licença (Railway)</th>
               <th className="text-left py-3 px-4 font-medium">Créditos</th>
@@ -1033,7 +1184,7 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-text-secondary">
+                <td colSpan={7} className="py-12 text-center text-text-secondary">
                   Nenhum cliente no CRM.
                 </td>
               </tr>
@@ -1047,6 +1198,8 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
               const waUrl = cleanPhone ? `https://wa.me/${waNumber}?text=${waText}` : null;
               const primaryCred = c.credentials?.[0];
               const lk = primaryCred?.licenseKey;
+              const studentPassword = primaryCred?.plainPassword || 'membro123';
+              const studentUsername = primaryCred?.username || c.email.split('@')[0];
 
               return (
                 <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -1054,6 +1207,39 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
                   <td className="py-3 px-4">
                     <div className="font-semibold text-text-primary">{c.name}</div>
                     <div className="text-xs text-text-secondary">{c.email}</div>
+                  </td>
+
+                  {/* Usuário & Senha do Aluno */}
+                  <td className="py-3 px-4">
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs text-text-secondary flex items-center gap-1.5">
+                        <span className="text-text-muted text-[11px]">Usuário:</span>
+                        <span className="font-mono text-text-primary text-xs font-semibold">{studentUsername}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-text-muted text-[11px]">Senha:</span>
+                        <code className="font-mono text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                          {showPasswords[c.id] ? studentPassword : '••••••••'}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => toggleShowPassword(c.id)}
+                          title={showPasswords[c.id] ? 'Ocultar senha' : 'Ver senha'}
+                          className="text-text-secondary hover:text-text-primary p-0.5 transition-colors"
+                        >
+                          {showPasswords[c.id] ? <EyeOff className="h-3.5 w-3.5 text-amber-400" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyPassword(studentPassword, c.id)}
+                          title="Copiar senha do aluno"
+                          className="text-text-secondary hover:text-text-primary p-0.5 transition-colors"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        {copiedPass === c.id && <span className="text-[10px] text-emerald-400 font-semibold">Copiada!</span>}
+                      </div>
+                    </div>
                   </td>
 
                   {/* WhatsApp */}
@@ -1149,6 +1335,17 @@ function CustomersPanel({ customers }: { customers: Customer[] }) {
                           </>
                         )}
 
+                        {/* Alterar Senha do Aluno */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openPasswordModal(c)}
+                          className="text-xs h-7 px-2 text-amber-400 hover:text-amber-300 border border-amber-400/20 hover:bg-amber-400/10"
+                          title="Ver ou Redefinir Senha do Aluno (Sincroniza com HostGator)"
+                        >
+                          <Lock className="h-3 w-3 mr-1" /> Senha
+                        </Button>
+
                         {/* Editar Cliente */}
                         <Button
                           variant="ghost"
@@ -1194,6 +1391,8 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
   const [, startTransition] = useTransition();
   const [working, setWorking] = useState<{ id: string; action: string } | null>(null);
   const [msgs, setMsgs] = useState<Record<string, { text: string; ok: boolean }>>({});
+  const [showCredPasswords, setShowCredPasswords] = useState<Record<string, boolean>>({});
+  const [copiedCredPass, setCopiedCredPass] = useState<string | null>(null);
 
   async function doAction(credId: string, action: 'revoke' | 'regenerate') {
     setWorking({ id: credId, action });
@@ -1212,12 +1411,32 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
     }
   }
 
+  async function changeCredPassword(customerId: string, email: string, name: string, currentPass?: string | null) {
+    const defaultPass = currentPass || 'membro' + Math.floor(1000 + Math.random() * 9000);
+    const newPass = window.prompt(`Digite a nova senha para ${name} (${email}):`, defaultPass);
+    if (!newPass || !newPass.trim()) return;
+
+    try {
+      const res = await fetch('/api/admin/customers/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, email, newPassword: newPass.trim() }),
+      });
+      const data = await res.json();
+      alert(data.message || (res.ok ? 'Senha alterada com sucesso!' : data.error));
+      if (res.ok) startTransition(() => router.refresh());
+    } catch {
+      alert('Erro de conexão ao alterar senha');
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-white/10 text-text-secondary text-xs uppercase tracking-wider">
             <th className="text-left py-3 px-4 font-medium">Usuário</th>
+            <th className="text-left py-3 px-4 font-medium">Senha (Área de Membros)</th>
             <th className="text-left py-3 px-4 font-medium">Chave de Licença</th>
             <th className="text-left py-3 px-4 font-medium">Cliente</th>
             <th className="text-left py-3 px-4 font-medium">URL de Acesso</th>
@@ -1230,67 +1449,109 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
         <tbody>
           {credentials.length === 0 && (
             <tr>
-              <td colSpan={7} className="py-12 text-center text-text-secondary">Nenhuma credencial ainda.</td>
+              <td colSpan={9} className="py-12 text-center text-text-secondary">Nenhuma credencial ainda.</td>
             </tr>
           )}
-          {credentials.map((c) => (
-            <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-              <td className="py-3 px-4 font-mono text-xs text-text-primary">{c.username}</td>
-              <td className="py-3 px-4 font-mono text-xs text-brand font-bold">{c.licenseKey || '—'}</td>
-              <td className="py-3 px-4">
-                <div className="font-medium text-text-primary">{c.customer.name}</div>
-                <div className="text-xs text-text-secondary">{c.customer.email}</div>
-              </td>
-              <td className="py-3 px-4">
-                <a
-                  href={c.accessUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-brand hover:underline text-xs"
-                >
-                  Abrir <ExternalLink className="w-3 h-3" />
-                </a>
-              </td>
-              <td className="py-3 px-4 text-xs text-text-secondary">
-                {c.railwayAppUrl ? (
-                  <a href={c.railwayAppUrl} target="_blank" rel="noreferrer" className="text-brand hover:underline inline-flex items-center gap-1">
-                    Railway <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : '—'}
-              </td>
-              <td className="py-3 px-4"><StatusBadge status={c.status} /></td>
-              <td className="py-3 px-4 text-text-secondary text-xs">{fmt(c.expiresAt)}</td>
-              <td className="py-3 px-4">
-                <div className="flex flex-col gap-1">
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={!!working}
-                      onClick={() => doAction(c.id, 'regenerate')}
-                      title="Regenerar token"
+          {credentials.map((c) => {
+            const pass = c.plainPassword || 'membro123';
+            return (
+              <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                <td className="py-3 px-4 font-mono text-xs text-text-primary font-semibold">{c.username}</td>
+                <td className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    <code className="font-mono text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                      {showCredPasswords[c.id] ? pass : '••••••••'}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => setShowCredPasswords((prev) => ({ ...prev, [c.id]: !prev[c.id] }))}
+                      title={showCredPasswords[c.id] ? 'Ocultar senha' : 'Ver senha'}
+                      className="text-text-secondary hover:text-text-primary p-0.5 transition-colors"
                     >
-                      <RotateCcw className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={!!working || c.status === 'revoked'}
-                      onClick={() => doAction(c.id, 'revoke')}
-                      title="Revogar acesso"
+                      {showCredPasswords[c.id] ? <EyeOff className="h-3.5 w-3.5 text-amber-400" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(pass);
+                        setCopiedCredPass(c.id);
+                        setTimeout(() => setCopiedCredPass(null), 2000);
+                      }}
+                      title="Copiar senha"
+                      className="text-text-secondary hover:text-text-primary p-0.5 transition-colors"
                     >
-                      <ShieldOff className="w-3 h-3" />
-                    </Button>
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    {copiedCredPass === c.id && <span className="text-[10px] text-emerald-400 font-semibold">Copiada!</span>}
                   </div>
-                  {msgs[c.id]?.text && (
-                    <span className={cn('text-xs', msgs[c.id].ok ? 'text-success' : 'text-error')}>
-                      {msgs[c.id].text}
-                    </span>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td className="py-3 px-4 font-mono text-xs text-brand font-bold">{c.licenseKey || '—'}</td>
+                <td className="py-3 px-4">
+                  <div className="font-medium text-text-primary">{c.customer.name}</div>
+                  <div className="text-xs text-text-secondary">{c.customer.email}</div>
+                </td>
+                <td className="py-3 px-4">
+                  <a
+                    href={c.accessUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-brand hover:underline text-xs"
+                  >
+                    Abrir <ExternalLink className="w-3 h-3" />
+                  </a>
+                </td>
+                <td className="py-3 px-4 text-xs text-text-secondary">
+                  {c.railwayAppUrl ? (
+                    <a href={c.railwayAppUrl} target="_blank" rel="noreferrer" className="text-brand hover:underline inline-flex items-center gap-1">
+                      Railway <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : '—'}
+                </td>
+                <td className="py-3 px-4"><StatusBadge status={c.status} /></td>
+                <td className="py-3 px-4 text-text-secondary text-xs">{fmt(c.expiresAt)}</td>
+                <td className="py-3 px-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => changeCredPassword(c.customer.id, c.customer.email, c.customer.name, c.plainPassword)}
+                        className="text-xs h-7 px-2 text-amber-400 hover:text-amber-300 border border-amber-400/20 hover:bg-amber-400/10"
+                        title="Alterar Senha do Aluno"
+                      >
+                        <Lock className="w-3 h-3 mr-1" /> Senha
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!!working}
+                        onClick={() => doAction(c.id, 'regenerate')}
+                        className="text-xs h-7 px-2"
+                        title="Regenerar token de acesso"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={!!working || c.status === 'revoked'}
+                        onClick={() => doAction(c.id, 'revoke')}
+                        className="text-xs h-7 px-2"
+                        title="Revogar acesso"
+                      >
+                        <ShieldOff className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {msgs[c.id]?.text && (
+                      <span className={cn('text-xs', msgs[c.id].ok ? 'text-success' : 'text-error')}>
+                        {msgs[c.id].text}
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
