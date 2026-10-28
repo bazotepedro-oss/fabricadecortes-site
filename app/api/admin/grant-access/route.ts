@@ -216,6 +216,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       message: `Acesso concedido com sucesso para ${customer.name}!`,
+      customerId: customer.id,
       licenseKey,
       email: customer.email,
       name: customer.name,

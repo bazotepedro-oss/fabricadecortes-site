@@ -8,12 +8,12 @@ export async function POST(req: Request) {
   const auth = await verifyAdminRequest();
   if (!auth) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-  const { customerId } = await req.json().catch(() => ({}));
-  if (!customerId) return NextResponse.json({ error: 'ID do cliente obrigatório' }, { status: 400 });
+  const { customerId, email } = await req.json().catch(() => ({}));
+  if (!customerId && !email) return NextResponse.json({ error: 'ID ou e-mail do cliente obrigatório' }, { status: 400 });
 
   try {
-    const customer = await prisma.customer.findUnique({
-      where: { id: customerId },
+    const customer = await prisma.customer.findFirst({
+      where: customerId ? { id: customerId } : { email: String(email).toLowerCase().trim() },
       include: { credentials: true, orders: true },
     });
 
@@ -52,16 +52,16 @@ export async function POST(req: Request) {
     );
 
     // 3. Remove credenciais, assinaturas, pedidos e cliente do banco local
-    await prisma.accessCredentials.deleteMany({ where: { customerId } });
-    await prisma.subscription.deleteMany({ where: { customerId } });
-    await prisma.order.deleteMany({ where: { customerId } });
-    await prisma.customer.delete({ where: { id: customerId } });
+    await prisma.accessCredentials.deleteMany({ where: { customerId: customer.id } });
+    await prisma.subscription.deleteMany({ where: { customerId: customer.id } });
+    await prisma.order.deleteMany({ where: { customerId: customer.id } });
+    await prisma.customer.delete({ where: { id: customer.id } });
 
     // 4. Registra no AuditLog local para impedir que sincronizações futuras da AbacatePay recriem o cliente
     await prisma.auditLog.create({
       data: {
         eventType: 'customer_deleted',
-        userId: customerId,
+        userId: customer.id,
         message: customerEmail,
         metadata: {
           name: customer.name,
