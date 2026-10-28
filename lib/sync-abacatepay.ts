@@ -38,14 +38,46 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
     const processed: string[] = [];
     const debugInfo: any[] = [];
-    const [railwayLicenses, deletedEmails, hostgatorStudents] = await Promise.all([
+    const [railwayLicenses, deletedInfo, hostgatorStudents, lastClearLog, deletedLogs] = await Promise.all([
       listLicensesFromServer().catch(() => []),
-      syncListDeletedStudents().catch(() => new Set<string>()),
+      syncListDeletedStudents().catch(() => ({ deleted: new Set<string>(), clearedAt: null })),
       syncListStudents().catch(() => []),
+      prisma.auditLog.findFirst({
+        where: { eventType: 'crm_cleared' },
+        orderBy: { createdAt: 'desc' },
+      }).catch(() => null),
+      prisma.auditLog.findMany({
+        where: { eventType: 'customer_deleted' },
+        select: { message: true },
+      }).catch(() => []),
     ]);
+
+    const deletedEmails = new Set<string>([
+      ...Array.from(deletedInfo.deleted || []),
+      ...deletedLogs.map((l) => (l.message || '').toLowerCase().trim()).filter(Boolean),
+    ]);
+
+    let clearedAt: Date | null = null;
+    if (deletedInfo.clearedAt) {
+      clearedAt = new Date(deletedInfo.clearedAt);
+    }
+    if (lastClearLog?.createdAt) {
+      const localCleared = new Date(lastClearLog.createdAt);
+      if (!clearedAt || localCleared > clearedAt) {
+        clearedAt = localCleared;
+      }
+    }
 
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
+
+      // Se o checkout ocorreu antes da limpeza total do CRM, ignora permanentemente
+      if (clearedAt && c.createdAt) {
+        const cDate = new Date(c.createdAt);
+        if (cDate <= clearedAt) {
+          continue;
+        }
+      }
 
       const meta = c.metadata || {};
       const customerEmail = (meta.email || '').toLowerCase().trim();

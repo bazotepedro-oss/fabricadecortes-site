@@ -87,7 +87,7 @@ export async function syncDeleteStudent(email: string): Promise<boolean> {
 /**
  * Lista todos os e-mails de alunos excluídos persistentemente na Área de Membros
  */
-export async function syncListDeletedStudents(): Promise<Set<string>> {
+export async function syncListDeletedStudents(): Promise<{ deleted: Set<string>; clearedAt: string | null }> {
   try {
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_list_deleted`, {
@@ -98,13 +98,14 @@ export async function syncListDeletedStudents(): Promise<Set<string>> {
     });
 
     const data = await res.json().catch(() => null);
-    if (res.ok && Array.isArray(data?.deleted)) {
-      return new Set(data.deleted.map((e: string) => String(e).toLowerCase().trim()));
-    }
-    return new Set();
+    const deleted = Array.isArray(data?.deleted)
+      ? new Set<string>(data.deleted.map((e: string) => String(e).toLowerCase().trim()))
+      : new Set<string>();
+    const clearedAt = data?.cleared_at ? String(data.cleared_at) : null;
+    return { deleted, clearedAt };
   } catch (err: any) {
     console.warn(`[MembersSync] Falha ao listar alunos excluídos:`, err?.message);
-    return new Set();
+    return { deleted: new Set<string>(), clearedAt: null };
   }
 }
 
@@ -196,7 +197,7 @@ export async function syncSetStudentPassword(email: string, novaSenha: string): 
 /**
  * Limpa todos os alunos da Área de Membros (ao resetar todo o CRM)
  */
-export async function syncClearStudents(): Promise<boolean> {
+export async function syncClearStudents(emails?: string[]): Promise<boolean> {
   try {
     const apiUrl = getMembersApiUrl();
     const res = await fetch(`${apiUrl}?action=admin_clear_students`, {
@@ -204,6 +205,7 @@ export async function syncClearStudents(): Promise<boolean> {
       headers: DEFAULT_HEADERS,
       body: JSON.stringify({
         secret: ADMIN_SECRET,
+        emails: emails || [],
       }),
       signal: AbortSignal.timeout(6000),
     });

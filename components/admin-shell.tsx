@@ -689,6 +689,20 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
     }
   }
 
+  async function deleteOrder(orderId: string) {
+    if (!window.confirm('Tem certeza que deseja excluir este pedido? As credenciais associadas também serão removidas.')) return;
+    try {
+      const res = await fetch('/api/admin/orders/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      if (res.ok) startTransition(() => router.refresh());
+    } catch {
+      alert('Erro ao excluir pedido');
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -723,25 +737,36 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(o.createdAt)}</td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(o.paidAt)}</td>
               <td className="py-3 px-4">
-                {o.status === 'pending' && (
-                  <div className="flex flex-col gap-1">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={activating === o.id}
-                      onClick={() => activate(o.id)}
-                      className="text-xs"
-                    >
-                      <Zap className="w-3 h-3" />
-                      {activating === o.id ? 'Ativando…' : 'Ativar manual'}
-                    </Button>
-                    {msg?.id === o.id && (
-                      <span className={cn('text-xs', msg.ok ? 'text-success' : 'text-error')}>
-                        {msg.text}
-                      </span>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {o.status === 'pending' && (
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={activating === o.id}
+                        onClick={() => activate(o.id)}
+                        className="text-xs"
+                      >
+                        <Zap className="w-3 h-3" />
+                        {activating === o.id ? 'Ativando…' : 'Ativar manual'}
+                      </Button>
+                      {msg?.id === o.id && (
+                        <span className={cn('text-xs', msg.ok ? 'text-success' : 'text-error')}>
+                          {msg.text}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteOrder(o.id)}
+                    className="text-text-secondary hover:text-error hover:bg-error/10 p-1.5 h-auto text-xs"
+                    title="Excluir pedido"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}
@@ -752,6 +777,23 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
 }
 
 function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+
+  async function deleteSubscription(subscriptionId: string) {
+    if (!window.confirm('Tem certeza que deseja excluir esta assinatura? As credenciais associadas também serão removidas.')) return;
+    try {
+      const res = await fetch('/api/admin/subscriptions/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId }),
+      });
+      if (res.ok) startTransition(() => router.refresh());
+    } catch {
+      alert('Erro ao excluir assinatura');
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -764,12 +806,13 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
             <th className="text-left py-3 px-4 font-medium">Status</th>
             <th className="text-left py-3 px-4 font-medium">Próx. renovação</th>
             <th className="text-left py-3 px-4 font-medium">Criado</th>
+            <th className="text-left py-3 px-4 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody>
           {subscriptions.length === 0 && (
             <tr>
-              <td colSpan={7} className="py-12 text-center text-text-secondary">Nenhuma assinatura ainda.</td>
+              <td colSpan={8} className="py-12 text-center text-text-secondary">Nenhuma assinatura ainda.</td>
             </tr>
           )}
           {subscriptions.map((s) => (
@@ -784,6 +827,17 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
               <td className="py-3 px-4"><StatusBadge status={s.status} /></td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(s.currentPeriodEnd)}</td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(s.createdAt)}</td>
+              <td className="py-3 px-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteSubscription(s.id)}
+                  className="text-text-secondary hover:text-error hover:bg-error/10 p-1.5 h-auto text-xs"
+                  title="Excluir assinatura"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -930,7 +984,7 @@ function CustomersPanel({
   }
 
   async function handleDeleteCustomer(customerId: string, customerName: string) {
-    if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM?`)) {
+    if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM? Todos os pedidos, assinaturas, credenciais e licença do Railway serão excluídos.`)) {
       return;
     }
     try {
@@ -939,20 +993,32 @@ function CustomersPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId }),
       });
-      if (res.ok) startTransition(() => router.refresh());
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        startTransition(() => router.refresh());
+      } else {
+        alert(data.error || 'Erro ao excluir cliente');
+      }
     } catch {
       alert('Erro ao excluir cliente');
     }
   }
 
   async function handleClearCrm() {
-    if (!window.confirm('ATENÇÃO: Deseja realmente LIMPAR TODO O CRM? Todos os clientes, pedidos e credenciais locais serão apagados.')) {
+    if (!window.confirm('ATENÇÃO: Deseja realmente LIMPAR TODO O CRM? Todos os clientes, pedidos, assinaturas, credenciais e licenças serão apagados permanentemente.')) {
       return;
     }
     setClearingCrm(true);
     try {
       const res = await fetch('/api/admin/customers/clear', { method: 'POST' });
-      if (res.ok) startTransition(() => router.refresh());
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        startTransition(() => router.refresh());
+      } else {
+        alert(data.error || 'Erro ao limpar CRM');
+      }
+    } catch {
+      alert('Erro ao conectar ao servidor para limpar CRM');
     } finally {
       setClearingCrm(false);
     }
@@ -1494,6 +1560,20 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
     }
   }
 
+  async function deleteCred(credId: string) {
+    if (!window.confirm('Tem certeza que deseja excluir esta credencial? A licença vinculada no Railway também será removida.')) return;
+    try {
+      const res = await fetch('/api/admin/credentials/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credId }),
+      });
+      if (res.ok) startTransition(() => router.refresh());
+    } catch {
+      alert('Erro ao excluir credencial');
+    }
+  }
+
   async function changeCredPassword(customerId: string, email: string, name: string, currentPass?: string | null) {
     const defaultPass = currentPass || 'membro' + Math.floor(1000 + Math.random() * 9000);
     const newPass = window.prompt(`Digite a nova senha para ${name} (${email}):`, defaultPass);
@@ -1623,6 +1703,16 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
                         title="Revogar acesso"
                       >
                         <ShieldOff className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!!working}
+                        onClick={() => deleteCred(c.id)}
+                        className="text-xs h-7 px-2 text-text-secondary hover:text-error hover:bg-error/10"
+                        title="Excluir credencial e licença"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                     {msgs[c.id]?.text && (
