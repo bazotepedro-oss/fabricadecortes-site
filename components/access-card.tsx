@@ -58,7 +58,7 @@ export function AccessCard() {
       if (orderIdParam) setValue('orderId', orderIdParam);
       onSubmit({ email: emailParam, orderId: orderIdParam });
     }
-  }, [emailParam, orderIdParam]);
+  }, [emailParam, orderIdParam, setValue]);
 
   const onSubmit = async (data: FormData) => {
     setError(null);

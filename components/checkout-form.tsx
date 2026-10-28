@@ -151,6 +151,7 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
     if (detected && !appliedCoupon) {
       applyCouponCode(detected);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const removeCoupon = () => {
