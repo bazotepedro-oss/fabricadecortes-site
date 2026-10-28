@@ -1,11 +1,10 @@
 // GET /api/plans — return active plans
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getActivePlans } from '@/lib/plans';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const plans = await prisma.plan.findMany({
-    where: { active: true },
-    orderBy: { slug: 'asc' },
-  });
+  const plans = await getActivePlans();
   return NextResponse.json({ plans });
 }

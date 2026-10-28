@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { prisma } from '@/lib/db';
+import { getActivePlans } from '@/lib/plans';
 import { formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { CheckoutForm } from '@/components/checkout-form';
@@ -14,7 +14,7 @@ interface CheckoutPageProps {
 }
 
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
-  const plans = await prisma.plan.findMany({ where: { active: true }, orderBy: { price: 'asc' } });
+  const plans = await getActivePlans();
   const defaultSlug = searchParams?.plan || searchParams?.slug || 'pack_criador';
 
   return (

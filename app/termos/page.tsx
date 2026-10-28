@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/db';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 

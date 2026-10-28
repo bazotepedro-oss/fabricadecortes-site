@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Sempre atualizado em tempo real
 
 interface PageProps {

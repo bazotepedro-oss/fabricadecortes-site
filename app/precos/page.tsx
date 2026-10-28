@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { prisma } from '@/lib/db';
+import { getActivePlans } from '@/lib/plans';
 import { formatPrice, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 export const revalidate = 60;
 
 export default async function PrecosPage() {
-  const plans = await prisma.plan.findMany({ where: { active: true }, orderBy: { price: 'asc' } });
+  const plans = await getActivePlans();
 
   return (
     <div className="min-h-screen bg-background text-text-primary flex flex-col justify-between">

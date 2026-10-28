@@ -15,6 +15,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'railway.app' },
     ],
   },
+  env: {
+    DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+  },
 };
 
 export default nextConfig;

@@ -5,6 +5,7 @@ import { listLicensesFromServer } from '@/lib/license-server';
 import { verifyAdminRequest } from '@/lib/auth';
 import { syncAbacatePay } from '@/lib/sync-abacatepay';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface PageProps {
