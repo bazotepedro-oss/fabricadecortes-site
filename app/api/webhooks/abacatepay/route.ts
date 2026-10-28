@@ -8,7 +8,7 @@ import { provision, revokeCredential } from '@/lib/provisioning';
 import { addCreditsOnServer } from '@/lib/license-server';
 import { sendRechargeEmail } from '@/lib/email';
 
-export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
@@ -33,21 +33,20 @@ export async function POST(req: Request) {
 
   const eventId = event.id || generateId('evt');
 
-  // Persist raw event for audit
-  const created = await prisma.webhookEvent.create({
-    data: {
-      provider: 'AbacatePay',
-      eventId,
-      type: event.type,
-      payload: event,
-      signature: signature || undefined,
-      processed: false,
-    },
-  });
-
-  // Idempotência
-  if (created.processed) {
-    return NextResponse.json({ ok: true, duplicate: true });
+  // Persist raw event for audit if DB is available
+  try {
+    await prisma.webhookEvent.create({
+      data: {
+        provider: 'AbacatePay',
+        eventId,
+        type: event.type,
+        payload: event,
+        signature: signature || undefined,
+        processed: false,
+      },
+    });
+  } catch (dbErr) {
+    console.warn('[Webhook] Prisma indisponível para salvar evento:', dbErr);
   }
 
   const status = mapStatus(event.data?.status);
@@ -56,60 +55,59 @@ export async function POST(req: Request) {
   const metadata = event.data?.metadata || {};
   const internalOrderId = metadata.orderId as string | undefined;
 
-  // Localizar order
+  // Localizar order no banco local se disponível
   const orConditions: any[] = [];
   if (checkoutId) orConditions.push({ abacateCheckoutId: checkoutId });
   if (internalOrderId) orConditions.push({ id: internalOrderId });
   if (orderId) orConditions.push({ abacateOrderId: orderId });
 
-  const order = orConditions.length
-    ? await prisma.order.findFirst({ where: { OR: orConditions } })
-    : null;
-
-  if (!order) {
-    await prisma.webhookEvent.update({
-      where: { id: created.id },
-      data: { processed: true, orderId: undefined },
-    });
-    return NextResponse.json({ ok: true, note: 'order not found' });
-  }
-
-  // Atualizar status
-  const updateData: any = { status };
-  if (status === 'paid') {
-    updateData.paidAt = new Date();
-    if (order.affiliateId) {
-      updateData.commissionStatus = 'credited';
-    }
-  } else if (status === 'canceled' || status === 'refunded') {
-    if (order.affiliateId) {
-      updateData.commissionStatus = 'refunded';
+  let order: any = null;
+  if (orConditions.length) {
+    try {
+      order = await prisma.order.findFirst({ where: { OR: orConditions } });
+    } catch (err) {
+      console.warn('[Webhook] Prisma indisponível para buscar pedido:', err);
     }
   }
-  await prisma.order.update({ where: { id: order.id }, data: updateData });
 
-  // Vincular evento à order
-  await prisma.webhookEvent.update({
-    where: { id: created.id },
-    data: { orderId: order.id },
-  });
+  if (order) {
+    try {
+      const updateData: any = { status };
+      if (status === 'paid') {
+        updateData.paidAt = new Date();
+        if (order.affiliateId) {
+          updateData.commissionStatus = 'credited';
+        }
+      } else if (status === 'canceled' || status === 'refunded') {
+        if (order.affiliateId) {
+          updateData.commissionStatus = 'refunded';
+        }
+      }
+      await prisma.order.update({ where: { id: order.id }, data: updateData });
+    } catch (orderUpdateErr) {
+      console.warn('[Webhook] Erro ao atualizar status do pedido no banco:', orderUpdateErr);
+    }
+  }
 
   if (status === 'paid') {
-    const meta = (order.metadata as any) || {};
+    const meta = (order?.metadata as any) || metadata || {};
     if (meta.isRecharge && meta.licenseKey && meta.creditsToAdd) {
       try {
         await addCreditsOnServer(meta.licenseKey, Number(meta.creditsToAdd));
         console.log(`[Webhook] Recarga automática de ${meta.creditsToAdd} créditos para a chave ${meta.licenseKey}`);
-        await prisma.accessCredentials.updateMany({
-          where: { licenseKey: meta.licenseKey },
-          data: { credits: { increment: Number(meta.creditsToAdd) } },
-        });
+        try {
+          await prisma.accessCredentials.updateMany({
+            where: { licenseKey: meta.licenseKey },
+            data: { credits: { increment: Number(meta.creditsToAdd) } },
+          });
+        } catch {}
 
-        const customer = await prisma.customer.findUnique({ where: { id: order.customerId } });
-        if (customer) {
+        const customerEmail = meta.email || order?.customer?.email;
+        const customerName = meta.name || order?.customer?.name || 'Criador';
+        if (customerEmail) {
           await sendRechargeEmail({
-            to: customer.email,
-            name: customer.name,
+            to: customerEmail,
+            name: customerName,
             licenseKey: meta.licenseKey,
             creditsAdded: Number(meta.creditsToAdd),
           }).catch((err) => console.error('[Webhook] Falha ao enviar e-mail de recarga:', err));
@@ -117,65 +115,50 @@ export async function POST(req: Request) {
       } catch (e: any) {
         console.error('[Webhook] Falha na recarga de créditos:', e?.message);
       }
-    }
+    } else if (!meta.isRecharge) {
+      // Compra de plano novo
+      const planSlug = meta.slug || order?.plan?.slug || 'pack_criador';
+      const credits = planSlug === 'pack_teste' ? 15 : planSlug === 'pack_iniciante' ? 30 : planSlug === 'pack_escala' ? 120 : planSlug === 'pack_pro' ? 250 : 50;
 
-    let subscription = await prisma.subscription.findFirst({
-      where: { customerId: order.customerId, planId: order.planId, status: 'active' },
-    });
-    if (!subscription) {
-      subscription = await prisma.subscription.create({
-        data: {
-          customerId: order.customerId,
-          planId: order.planId,
-          status: 'active',
-          provider: 'AbacatePay',
-          providerSubscriptionId: event.data?.subscriptionId,
-          orderId: order.id,
-        },
-      });
-    } else if (event.data?.subscriptionId) {
-      subscription = await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { status: 'active', providerSubscriptionId: event.data.subscriptionId },
-      });
-    }
-
-    // Apenas provisiona nova credencial se NÃO for uma recarga
-    if (!meta.isRecharge) {
-      const customer = await prisma.customer.findUnique({ where: { id: order.customerId } });
-      const plan = await prisma.plan.findUnique({ where: { id: order.planId } });
-      if (customer && plan) {
+      if (order) {
         try {
           await provision({
-            customerId: customer.id,
+            customerId: order.customerId,
             orderId: order.id,
-            subscriptionId: subscription.id,
-            email: customer.email,
-            plan: plan.slug,
+            email: order.customer?.email || meta.email,
+            plan: planSlug,
             includeCourse: Boolean(meta.includeCourse),
           });
-        } catch (e: any) {
-          console.error('provision error:', e.message);
+        } catch (provErr) {
+          console.warn('[Webhook] Erro no provisionamento local:', provErr);
         }
+      } else {
+        // Se a ordem foi gerada em modo serverless na Vercel, provisiona no servidor Railway diretamente
+        const randomKey = `FC-${Math.random().toString(36).substring(2, 7).toUpperCase()}-ATIVADA`;
+        await createLicenseOnServer({
+          licenseKey: randomKey,
+          credits,
+          days: 365,
+          plan: planSlug,
+        }).catch((err) => console.error('[Webhook] Erro ao criar licença no Railway:', err));
       }
     }
   } else if (status === 'canceled' || status === 'refunded') {
-    const creds = await prisma.accessCredentials.findMany({
-      where: { orderId: order.id, status: 'active' },
-    });
-    for (const c of creds) {
-      await revokeCredential(c.id, `provider status: ${status}`);
+    if (order) {
+      try {
+        const creds = await prisma.accessCredentials.findMany({
+          where: { orderId: order.id, status: 'active' },
+        });
+        for (const c of creds) {
+          await revokeCredential(c.id, `provider status: ${status}`);
+        }
+        await prisma.subscription.updateMany({
+          where: { customerId: order.customerId, status: 'active' },
+          data: { status: status === 'canceled' ? 'canceled' : 'suspended' },
+        });
+      } catch {}
     }
-    await prisma.subscription.updateMany({
-      where: { customerId: order.customerId, status: 'active' },
-      data: { status: status === 'canceled' ? 'canceled' : 'suspended' },
-    });
   }
-
-  await prisma.webhookEvent.update({
-    where: { id: created.id },
-    data: { processed: true },
-  });
 
   return NextResponse.json({ ok: true });
 }

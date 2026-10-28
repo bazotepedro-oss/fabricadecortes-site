@@ -5,6 +5,7 @@ import { CheckCircle2, ArrowRight, Zap, MailCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { syncAbacatePay } from '@/lib/sync-abacatepay';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface RetornoPageProps {

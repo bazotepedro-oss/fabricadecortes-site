@@ -12,7 +12,7 @@ import { sendRechargeEmail } from './email';
  * Funciona mesmo em localhost sem precisar de webhook externo!
  */
 export async function syncAbacatePay(): Promise<{ synced: number; processed: string[] }> {
-  const apiKey = process.env.ABACATEPAY_API_KEY;
+  const apiKey = process.env.ABACATEPAY_API_KEY || 'abc_dev_zWzyHEKWK5cX6gZf63HUWpZy';
   if (!apiKey) return { synced: 0, processed: [] };
 
   try {
@@ -26,34 +26,43 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
     const checkouts = json.data || [];
 
     const processed: string[] = [];
-    const railwayLicenses = await listLicensesFromServer();
+    const railwayLicenses = await listLicensesFromServer().catch(() => []);
 
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
 
-      const order = await prisma.order.findFirst({
-        where: {
-          OR: [
-            { abacateCheckoutId: c.id },
-            { id: c.metadata?.orderId },
-          ],
-        },
-        include: { customer: true, plan: true },
-      });
+      let order: any = null;
+      try {
+        order = await prisma.order.findFirst({
+          where: {
+            OR: [
+              { abacateCheckoutId: c.id },
+              { id: c.metadata?.orderId },
+            ],
+          },
+          include: { customer: true, plan: true },
+        });
+      } catch (err) {
+        console.warn('[Sync AbacatePay] Prisma indisponível:', err);
+      }
 
-      if (!order || order.status === 'paid') continue;
+      if (order && order.status === 'paid') continue;
 
-      // 1. Marca como pago
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'paid',
-          paidAt: new Date(c.updatedAt || Date.now()),
-          commissionStatus: order.affiliateId ? 'credited' : order.commissionStatus,
-        },
-      });
+      // 1. Marca como pago no banco se disponível
+      if (order) {
+        try {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              status: 'paid',
+              paidAt: new Date(c.updatedAt || Date.now()),
+              commissionStatus: order.affiliateId ? 'credited' : order.commissionStatus,
+            },
+          });
+        } catch {}
+      }
 
-      const meta = (order.metadata as any) || c.metadata || {};
+      const meta = (order?.metadata as any) || c.metadata || {};
       const isRecharge = meta.isRecharge === true || meta.isRecharge === 'true';
 
       if (isRecharge && meta.licenseKey && meta.creditsToAdd) {

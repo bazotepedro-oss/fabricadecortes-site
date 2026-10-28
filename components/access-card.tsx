@@ -68,14 +68,24 @@ export function AccessCard() {
       params.set('email', data.email);
       if (data.orderId) params.set('orderId', data.orderId);
       const res = await fetch(`/api/access/find?${params.toString()}`);
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error || 'Não encontramos acesso para esses dados.');
+      
+      let json: any = {};
+      try {
+        json = await res.json();
+      } catch (parseErr) {
+        console.error('Resposta não-JSON do servidor:', parseErr);
+        setError('Não foi possível consultar os dados no momento. Tente novamente.');
+        return;
+      }
+
+      if (!res.ok || !json.ok) {
+        setError(json.error || 'Não encontramos acesso liberado para esses dados.');
         return;
       }
       setResult(json);
-    } catch {
-      setError('Erro de conexão. Tente novamente.');
+    } catch (err: any) {
+      console.error('Erro de rede ao buscar acesso:', err);
+      setError('Erro de conexão com o servidor. Tente novamente.');
     }
   };
 
