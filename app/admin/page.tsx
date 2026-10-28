@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { AdminShell } from '@/components/admin-shell';
 import { listLicensesFromServer } from '@/lib/license-server';
 import { verifyAdminRequest } from '@/lib/auth';
+import { syncAbacatePay } from '@/lib/sync-abacatepay';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -18,6 +19,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
   if (!session) {
     redirect('/admin/login');
   }
+
+  // Sincroniza pagamentos válidos da AbacatePay (v2) respeitando timestamps de limpeza e exclusão
+  await syncAbacatePay().catch((err) => console.error('[Admin] Erro na sincronização:', err));
 
   const [orders, subscriptions, customers, credentials, events, railwayLicenses, affiliates] = await Promise.all([
     prisma.order.findMany({ include: { customer: true, plan: true }, orderBy: { createdAt: 'desc' }, take: 50 }).catch((e) => { console.warn('[Admin] Erro ao carregar pedidos:', e); return []; }),

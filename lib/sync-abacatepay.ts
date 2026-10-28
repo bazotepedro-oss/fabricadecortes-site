@@ -295,7 +295,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       synced: processed.length,
       processed,
       totalCheckouts: checkouts.length,
-      deletedEmails: Array.from(deletedEmails),
+      deletedEmails: Array.from(deletedAtMap.keys()),
       railwayLicensesCount: railwayLicenses.length,
     } as any;
   } catch (err: any) {
