@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   let order: any = null;
   if (orConditions.length) {
     try {
-      order = await prisma.order.findFirst({ where: { OR: orConditions } });
+      order = await prisma.order.findFirst({ where: { OR: orConditions }, include: { customer: true, plan: true } });
     } catch (err) {
       console.warn('[Webhook] Prisma indisponível para buscar pedido:', err);
     }

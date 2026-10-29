@@ -147,11 +147,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
         continue;
       }
 
-      // 2. Se o cliente foi excluído após esta compra, ignora histórico anterior
-      const deletedAt = deletedAtMap.get(customerEmail);
-      if (deletedAt && checkoutDate <= deletedAt) {
-        continue;
-      }
+
 
       try {
         let order: any = null;
@@ -329,9 +325,9 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
             creditsAdded: credits,
           }).catch((err) => console.error('[Sync AbacatePay] Falha ao enviar e-mail de recarga:', err));
         } else if (!isRecharge) {
-          // Compra de plano novo: verifica se já tem credencial ativa
+          // Compra de plano novo: verifica se já tem credencial ativa para este pedido
           let cred = await prisma.accessCredentials.findFirst({
-            where: { customerId: customer.id },
+            where: { orderId: order.id },
           });
 
           const hgStudent = hostgatorStudents.find((s: any) => s.email?.toLowerCase() === customerEmail);
@@ -386,7 +382,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
               licenseKey: chosenKey,
               password: studentPassword,
               includeCourse: meta.includeCourse === 'true' || meta.includeCourse === true,
-              skipEmail: Boolean(hgStudent),
+              skipEmail: false,
             });
           }
         }
@@ -401,7 +397,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
     if (Array.isArray(hostgatorStudents) && hostgatorStudents.length > 0) {
       for (const st of hostgatorStudents) {
         const stEmail = (st.email || '').toLowerCase().trim();
-        if (!stEmail || deletedAtMap.has(stEmail)) continue;
+        if (!stEmail) continue;
 
         try {
           const cust = await prisma.customer.findUnique({
@@ -434,7 +430,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       synced: processed.length,
       processed,
       totalCheckouts: checkouts.length,
-      deletedEmails: Array.from(deletedAtMap.keys()),
+      deletedEmails: [],
       railwayLicensesCount: railwayLicenses.length,
     } as any;
   } catch (err: any) {
