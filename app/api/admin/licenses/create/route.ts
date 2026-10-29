@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         licenseKey,
         credits,
         courseUrl: courseUrl(),
-        accessUrl: `${base}/acesso`,
+        accessUrl: `${base}/retorno`,
         status: 'active',
         expiresAt,
       },

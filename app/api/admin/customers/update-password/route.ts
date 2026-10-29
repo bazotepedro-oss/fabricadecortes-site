@@ -71,7 +71,7 @@ export async function POST(req: Request) {
               username: targetEmail.split('@')[0],
               passwordHash,
               plainPassword: newPassword,
-              accessUrl: `${base}/acesso`,
+              accessUrl: `${base}/retorno`,
               status: 'active',
             },
           },
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
             username: customer.email.split('@')[0],
             passwordHash,
             plainPassword: newPassword,
-            accessUrl: `${base}/acesso`,
+            accessUrl: `${base}/retorno`,
             status: 'active',
           },
         }).catch(() => null);

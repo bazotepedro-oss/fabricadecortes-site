@@ -35,15 +35,15 @@ export default function SuportePage() {
           {/* 1. Ativação da Licença */}
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
             <div className="flex items-center gap-2 text-brand font-bold text-base">
-              <KeyRound className="h-5 w-5" /> 1. Como recuperar minha chave
+              <KeyRound className="h-5 w-5" /> 1. Como recebo minha chave
             </div>
             <p className="text-xs leading-relaxed text-text-secondary">
-              Comprou um pacote e precisa ver sua chave de ativação? Informe seu e-mail cadastrado na nossa página de recuperação para ver sua chave oficial e créditos restantes.
+              Comprou um pacote? Todos os seus dados de acesso (login, senha e chave de licença oficial) são enviados instantaneamente para o seu e-mail cadastrado e ficam disponíveis na Área de Membros.
             </p>
             <div className="pt-2">
               <Button asChild size="sm" variant="secondary" className="w-full sm:w-auto">
-                <Link href="/acesso">
-                  <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Abrir Página de Acesso
+                <Link href="/retorno">
+                  <KeyRound className="h-3.5 w-3.5 mr-1.5" /> Ver Instruções de Acesso
                 </Link>
               </Button>
             </div>

@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const credits = cred?.credits || 50;
     const password = cred?.plainPassword || 'membro2026';
     const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.fabricadecortes.com').replace(/\/$/, '');
-    const accessUrl = cred?.accessUrl || `${base}/acesso`;
+    const accessUrl = cred?.accessUrl || `${base}/retorno`;
 
     const emailRes = await sendAccessEmail({
       to: customer.email,

@@ -7,7 +7,7 @@ const LINKS = [
   { label: 'Planos & Preços', href: '/#planos' },
   { label: 'Área de Membros VIP', href: '/membros' },
   { label: 'Recarregar Créditos', href: '/recarga' },
-  { label: 'Recuperar Meu Acesso', href: '/acesso' },
+  { label: 'Instruções de Acesso', href: '/retorno' },
   { label: 'Dúvidas Frequentes', href: '/#faq' },
 ];
 

@@ -17,6 +17,7 @@ export interface ProvisionInput {
   includeCourse?: boolean;
   licenseKey?: string;
   password?: string;
+  skipEmail?: boolean;
 }
 
 export interface ProvisionResult {
@@ -119,7 +120,7 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
   const accessTokenHash = hashToken(accessToken);
 
   const base = appBaseUrl().replace(/\/$/, '');
-  const accessUrl = `${base}/acesso?token=${accessToken}`;
+  const accessUrl = `${base}/retorno`;
 
   const { credits, days } = getPlanSpecs(input.plan);
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
@@ -192,26 +193,28 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
   }
 
   // 5. Envia e-mail automático com Chave de Licença, créditos e Acesso à Área de Membros
-  try {
-    const customer = await prisma.customer.findUnique({ where: { id: input.customerId } });
-    await sendAccessEmail({
-      to: input.email,
-      name: customer?.name || username,
-      licenseKey,
-      credits,
-      accessUrl,
-      membersUrl: membersUrl(),
-      includeCourse: input.includeCourse,
-      driveUrl: driveUrl(),
-      whatsappUrl: whatsappUrl(),
-      courseUrl: membersUrl(),
-      colabUrl: colabUrl(),
-      username,
-      temporaryPassword,
-      planName: input.plan,
-    });
-  } catch (emailErr: any) {
-    console.error(`[Provisioning] Falha ao enviar e-mail de acesso:`, emailErr?.message);
+  if (!input.skipEmail) {
+    try {
+      const customer = await prisma.customer.findUnique({ where: { id: input.customerId } });
+      await sendAccessEmail({
+        to: input.email,
+        name: customer?.name || username,
+        licenseKey,
+        credits,
+        accessUrl,
+        membersUrl: membersUrl(),
+        includeCourse: input.includeCourse,
+        driveUrl: driveUrl(),
+        whatsappUrl: whatsappUrl(),
+        courseUrl: membersUrl(),
+        colabUrl: colabUrl(),
+        username,
+        temporaryPassword,
+        planName: input.plan,
+      });
+    } catch (emailErr: any) {
+      console.error(`[Provisioning] Falha ao enviar e-mail de acesso:`, emailErr?.message);
+    }
   }
 
   return {

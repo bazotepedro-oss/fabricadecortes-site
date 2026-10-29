@@ -85,7 +85,7 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
     input.colabUrl ||
     process.env.COLAB_NOTEBOOK_URL ||
     'https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/ViralCutter.ipynb';
-  const accessPage = input.accessUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/acesso`;
+  const accessPage = input.accessUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/retorno`;
   const membersLink =
     input.membersUrl ||
     process.env.NEXT_PUBLIC_MEMBERS_URL ||
@@ -261,7 +261,7 @@ export async function sendRechargeEmail(input: SendRechargeEmailInput): Promise<
   }
 
   const from = process.env.EMAIL_FROM || 'Fábrica dos Cortes <contato@fabricadecortes.com>';
-  const accessPage = input.accessUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/acesso`;
+  const accessPage = input.accessUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/retorno`;
   const logoAttachments = getLogoAttachments();
 
   const html = `

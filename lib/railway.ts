@@ -17,5 +17,5 @@ export function buildAppAccessUrl(token?: string): string {
   const base = getRailwayAppUrl();
   if (!base) return '';
   if (!token) return base;
-  return `${base}/acesso?token=${encodeURIComponent(token)}`;
+  return `${base}/retorno`;
 }

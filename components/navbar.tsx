@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, KeyRound, Sparkles, PlayCircle } from 'lucide-react';
+import { Menu, X, Sparkles, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NAV_LINKS = [
   { label: 'Como Funciona', href: '/#como-funciona' },
   { label: 'Recursos', href: '/#recursos' },
   { label: 'Planos & Preços', href: '/#planos' },
-  { label: 'Área de Membros', href: '/membros' },
   { label: 'Dúvidas', href: '/#faq' },
 ];
 
@@ -17,8 +16,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#0A0A0C]/85 backdrop-blur-xl transition-all duration-300">
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#0A0A0C]/90 backdrop-blur-2xl transition-all duration-300">
+      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* ── Brand Logo & Name ── */}
         <Link href="/" className="flex items-center gap-3 group shrink-0">
@@ -40,40 +39,32 @@ export function Navbar() {
         </Link>
 
         {/* ── Desktop Center Navigation (Clean & Essential) ── */}
-        <nav className="hidden md:flex items-center gap-1.5 lg:gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] backdrop-blur-md">
+        <nav className="hidden lg:flex items-center gap-1 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
           {NAV_LINKS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="px-3.5 py-1.5 text-sm font-medium text-neutral-300 hover:text-white rounded-full hover:bg-white/[0.08] transition-all duration-200 whitespace-nowrap"
+              className="px-4 py-1.5 text-sm font-medium text-neutral-300 hover:text-white rounded-full hover:bg-white/[0.08] transition-all duration-200 whitespace-nowrap"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* ── Desktop Right Actions (1 secondary link + 1 standout CTA) ── */}
-        <div className="hidden sm:flex items-center gap-2.5">
+        {/* ── Desktop Right Actions (Área de Membros + CTA Garantir Créditos) ── */}
+        <div className="hidden sm:flex items-center gap-3 shrink-0">
           <Link
             href="/membros"
-            className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-400 hover:text-white transition-all duration-200 px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/25 hover:bg-orange-500/20 shadow-[0_0_15px_rgba(255,92,0,0.15)]"
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-orange-400 hover:text-orange-300 transition-all duration-200 px-4 py-2.5 rounded-xl bg-orange-500/10 border border-orange-500/25 hover:bg-orange-500/20 shadow-[0_0_15px_rgba(255,92,0,0.12)] whitespace-nowrap"
           >
             <PlayCircle className="w-4 h-4 text-brand" />
-            <span className="whitespace-nowrap">Área de Membros</span>
-          </Link>
-
-          <Link
-            href="/acesso"
-            className="flex items-center gap-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors duration-200 px-3.5 py-2 rounded-xl hover:bg-white/[0.06]"
-          >
-            <KeyRound className="w-4 h-4 text-brand" />
-            <span className="whitespace-nowrap">Meu Acesso</span>
+            <span>Área de Membros</span>
           </Link>
 
           <Link href="/#planos">
             <Button
               size="sm"
-              className="h-10 px-5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_25px_rgba(255,92,0,0.35)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="h-10 px-5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_25px_rgba(255,92,0,0.35)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
             >
               <Sparkles className="w-4 h-4 mr-1.5" />
               Garantir Créditos
@@ -87,7 +78,7 @@ export function Navbar() {
             <Button
               size="sm"
               variant="outline"
-              className="h-9 px-2.5 rounded-lg font-bold text-xs border-orange-500/40 text-orange-400 bg-orange-500/10"
+              className="h-9 px-3 rounded-lg font-bold text-xs border-orange-500/40 text-orange-400 bg-orange-500/10"
             >
               <PlayCircle className="w-3.5 h-3.5 mr-1" />
               Aulas
@@ -105,7 +96,7 @@ export function Navbar() {
 
       {/* ── Mobile Dropdown Menu ── */}
       {mobileOpen && (
-        <div className="border-t border-white/[0.08] bg-[#0A0A0C]/98 px-5 py-5 sm:hidden space-y-3 backdrop-blur-2xl animate-in slide-in-from-top-2 duration-200">
+        <div className="border-t border-white/[0.08] bg-[#0A0A0C]/98 px-5 py-5 sm:hidden space-y-4 backdrop-blur-2xl animate-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col space-y-2">
             {NAV_LINKS.map((item) => (
               <Link
@@ -119,23 +110,14 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="pt-3 border-t border-white/[0.08] flex flex-col gap-2.5">
+          <div className="pt-3 border-t border-white/[0.08] flex flex-col gap-3">
             <Link
               href="/membros"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 py-2 text-sm font-bold text-orange-400 bg-orange-500/10 px-3 rounded-lg border border-orange-500/25"
+              className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-orange-400 bg-orange-500/10 px-4 rounded-xl border border-orange-500/25"
             >
               <PlayCircle className="w-4 h-4 text-brand" />
               <span>🎬 Acessar Área de Membros VIP</span>
-            </Link>
-
-            <Link
-              href="/acesso"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 py-2 text-sm font-semibold text-neutral-200"
-            >
-              <KeyRound className="w-4 h-4 text-brand" />
-              <span>Meu Acesso / Chave de Licença</span>
             </Link>
 
             <Link href="/#planos" onClick={() => setMobileOpen(false)}>

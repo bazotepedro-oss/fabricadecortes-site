@@ -142,7 +142,7 @@ export async function POST(req: Request) {
     const base = (
       process.env.NEXT_PUBLIC_APP_URL || 'https://www.fabricadecortes.com'
     ).replace(/\/$/, '');
-    const accessUrl = `${base}/acesso?token=${accessToken}`;
+    const accessUrl = `${base}/retorno`;
     const username = email.split('@')[0];
 
     // 7. Salva Credencial no CRM local

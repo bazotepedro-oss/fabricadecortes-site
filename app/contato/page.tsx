@@ -29,7 +29,7 @@ export default function ContatoPage() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
             <div className="flex items-center gap-2 text-brand font-bold text-sm">
               <Mail className="h-4 w-4" /> E-mail de Suporte
@@ -44,12 +44,31 @@ export default function ContatoPage() {
             </p>
           </div>
 
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 space-y-3">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+              <Headphones className="h-4 w-4 text-emerald-400" /> WhatsApp Oficial
+            </div>
+            <p className="text-xs text-text-secondary">
+              Atendimento rápido para alunos e dúvidas de instalação:
+            </p>
+            <p className="font-semibold text-text-primary text-sm">
+              <a
+                href="https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC"
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold"
+              >
+                Entrar no Grupo VIP &rarr;
+              </a>
+            </p>
+          </div>
+
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
             <div className="flex items-center gap-2 text-brand font-bold text-sm">
               <MessageSquare className="h-4 w-4" /> Comunidade no Discord
             </div>
             <p className="text-xs text-text-secondary">
-              Tire dúvidas rápidas e troque ideias com outros criadores de conteúdo:
+              Tire dúvidas rápidas e troque ideias com outros criadores:
             </p>
             <p className="font-semibold text-text-primary text-sm">
               <a

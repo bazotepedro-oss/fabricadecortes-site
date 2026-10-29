@@ -225,7 +225,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
               customerId: customer.id,
               orderId: order.id,
               username: customerEmail.split('@')[0],
-              accessUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/acesso`,
+              accessUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/retorno`,
               licenseKey: key,
               credits,
               status: 'active',
@@ -282,6 +282,7 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
               licenseKey: chosenKey,
               password: studentPassword,
               includeCourse: meta.includeCourse === 'true' || meta.includeCourse === true,
+              skipEmail: Boolean(hgStudent),
             });
           }
         }

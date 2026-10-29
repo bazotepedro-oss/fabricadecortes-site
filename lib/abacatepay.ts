@@ -162,7 +162,7 @@ export async function createCheckout(
   const base = baseUrl();
 
   const completionUrl = input.returnURL.includes('/retorno')
-    ? `${input.returnURL.replace('/retorno', '')}/acesso?orderId=${encodeURIComponent(input.metadata.orderId || '')}`
+    ? `${input.returnURL}?status=sucesso&orderId=${encodeURIComponent(input.metadata?.orderId || '')}`
     : input.returnURL;
 
   // ── 1. Tenta API v2 Nativa ──

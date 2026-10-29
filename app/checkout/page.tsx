@@ -103,7 +103,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
                   </h4>
                   <ul className="mt-3 space-y-2 text-xs text-text-secondary">
                     <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand" /> Pagamento instantâneo via Pix (AbacatePay)</li>
-                    <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand" /> Chave gerada na hora na tela e no e-mail</li>
+                    <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand" /> Chave e acesso enviados na hora para o seu e-mail</li>
                     <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand" /> Acesso ao curso e tutoriais passo a passo</li>
                   </ul>
                 </div>
