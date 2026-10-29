@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-export async function GET() {
-  const admin = await verifyAdminRequest();
+export async function GET(req: Request) {
+  const admin = await verifyAdminRequest(undefined, req);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const creds = await prisma.accessCredentials.findMany({
