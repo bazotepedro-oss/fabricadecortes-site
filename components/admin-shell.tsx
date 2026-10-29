@@ -1613,6 +1613,10 @@ function CustomersPanel({
 function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<Credential[]>(credentials);
+  useEffect(() => {
+    setItems(credentials);
+  }, [credentials]);
   const [working, setWorking] = useState<{ id: string; action: string } | null>(null);
   const [msgs, setMsgs] = useState<Record<string, { text: string; ok: boolean }>>({});
   const [showCredPasswords, setShowCredPasswords] = useState<Record<string, boolean>>({});
@@ -1698,7 +1702,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
               <td colSpan={9} className="py-12 text-center text-text-secondary">Nenhuma credencial ainda.</td>
             </tr>
           )}
-          {credentials.map((c) => {
+          {items.map((c) => {
             const pass = c.plainPassword || 'membro123';
             return (
               <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
