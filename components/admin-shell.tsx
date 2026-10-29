@@ -864,7 +864,7 @@ function CustomersPanel({
   // Senhas de Alunos (Área de Membros & CRM)
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedPass, setCopiedPass] = useState<string | null>(null);
-  const [passwordModalCustomer, setPasswordModalCustomer] = useState<Customer | null>(null);
+  const [passwordModalCustomer, setPasswordModalCustomer] = useState<any>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordFeedback, setPasswordFeedback] = useState<{ text: string; ok: boolean } | null>(null);
@@ -915,7 +915,7 @@ function CustomersPanel({
     setEditPassword(c.credentials?.[0]?.plainPassword || '');
   }
 
-  function openPasswordModal(c: Customer) {
+  function openPasswordModal(c: any) {
     setPasswordModalCustomer(c);
     setNewPasswordInput(c.credentials?.[0]?.plainPassword || 'membro' + Math.floor(1000 + Math.random() * 9000));
     setPasswordFeedback(null);
@@ -932,11 +932,12 @@ function CustomersPanel({
         body: JSON.stringify({
           customerId: passwordModalCustomer.id,
           email: passwordModalCustomer.email,
+          name: passwordModalCustomer.name,
           newPassword: newPasswordInput.trim(),
         }),
       });
-      const data = await res.json();
-      setPasswordFeedback({ text: data.message || (res.ok ? 'Senha atualizada!' : data.error), ok: res.ok });
+      const data = await res.json().catch(() => ({}));
+      setPasswordFeedback({ text: data.message || (res.ok ? 'Senha atualizada com sucesso!' : data.error || 'Erro ao alterar senha'), ok: res.ok });
       if (res.ok) {
         startTransition(() => router.refresh());
         setTimeout(() => setPasswordModalCustomer(null), 1500);
@@ -968,6 +969,7 @@ function CustomersPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: editingCustomer.id,
+          currentEmail: editingCustomer.email,
           name: editName,
           email: editEmail,
           phone: editPhone,
@@ -975,10 +977,16 @@ function CustomersPanel({
           password: editPassword || undefined,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setEditingCustomer(null);
+        alert(data.message || 'Cliente atualizado com sucesso no CRM!');
         startTransition(() => router.refresh());
+      } else {
+        alert(data.error || 'Erro ao atualizar dados do cliente');
       }
+    } catch {
+      alert('Erro de conexão ao salvar alterações do cliente');
     } finally {
       setSavingEdit(false);
     }
@@ -1688,7 +1696,12 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => changeCredPassword(c.customer.id, c.customer.email, c.customer.name, c.plainPassword)}
+                        onClick={() => openPasswordModal({
+                          id: c.customer?.id || c.customerId,
+                          name: c.customer?.name || c.username,
+                          email: c.customer?.email || c.username,
+                          credentials: [c],
+                        })}
                         className="text-xs h-7 px-2 text-amber-400 hover:text-amber-300 border border-amber-400/20 hover:bg-amber-400/10"
                         title="Alterar Senha do Aluno"
                       >

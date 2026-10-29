@@ -55,6 +55,44 @@ export async function syncAddStudent(params: { name: string; email: string; pass
 }
 
 /**
+ * Edita os dados do aluno na Área de Membros (HostGator)
+ */
+export async function syncEditStudent(params: {
+  email: string;
+  novoNome?: string;
+  novoEmail?: string;
+  novaSenha?: string;
+}): Promise<boolean> {
+  if (!params.email) return false;
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(`${apiUrl}?action=admin_edit_student`, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({
+        secret: ADMIN_SECRET,
+        email: params.email.toLowerCase().trim(),
+        nome: params.novoNome,
+        novo_email: params.novoEmail ? params.novoEmail.toLowerCase().trim() : undefined,
+        senha: params.novaSenha,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.success) {
+      console.log(`[MembersSync] Aluno ${params.email} editado com sucesso na Área de Membros.`);
+      return true;
+    }
+    console.warn(`[MembersSync] Falha ao editar aluno ${params.email} na Área de Membros:`, data);
+    return false;
+  } catch (err: any) {
+    console.warn(`[MembersSync] Erro ao editar aluno ${params.email} na Área de Membros:`, err?.message);
+    return false;
+  }
+}
+
+/**
  * Exclui permanentemente o acesso do aluno na Área de Membros quando o cliente ou licença é excluído
  */
 export async function syncDeleteStudent(email: string): Promise<boolean> {

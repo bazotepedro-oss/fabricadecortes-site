@@ -299,7 +299,23 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
             where: { customerId: customer.id },
           });
 
-          if (!cred) {
+          const hgStudent = hostgatorStudents.find((s: any) => s.email?.toLowerCase() === customerEmail);
+
+          if (cred) {
+            // Sincroniza senha atualizada da Área de Membros para a credencial local existente
+            if (hgStudent?.senha_plana && cred.plainPassword !== hgStudent.senha_plana) {
+              await prisma.accessCredentials.updateMany({
+                where: { customerId: customer.id },
+                data: { plainPassword: hgStudent.senha_plana },
+              }).catch(() => null);
+            }
+            if (hgStudent?.nome && customer.name !== hgStudent.nome) {
+              await prisma.customer.update({
+                where: { id: customer.id },
+                data: { name: hgStudent.nome },
+              }).catch(() => null);
+            }
+          } else {
             // Localiza se já existe chave do Railway vinculada ou gerada para este plano
             const allCreds = await prisma.accessCredentials.findMany({ select: { licenseKey: true } }).catch(() => []);
             const assignedKeys = allCreds.map((k) => k.licenseKey);
@@ -307,7 +323,6 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
               (l) => l.plan === planSlug && l.status === 'active' && !assignedKeys.includes(l.license_key)
             );
 
-            const hgStudent = hostgatorStudents.find((s: any) => s.email?.toLowerCase() === customerEmail);
             const studentPassword = hgStudent?.senha_plana || meta.password || undefined;
             const chosenKey = matchingLic ? matchingLic.license_key : undefined;
 
@@ -344,6 +359,39 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
         processed.push(c.id);
       } catch (itemErr: any) {
         console.error(`[Sync AbacatePay] Falha ao processar checkout ${c.id}:`, itemErr?.message);
+      }
+    }
+
+    // ── 4. Sincroniza senhas e nomes de todos os alunos da Área de Membros no banco local ──
+    if (Array.isArray(hostgatorStudents) && hostgatorStudents.length > 0) {
+      for (const st of hostgatorStudents) {
+        const stEmail = (st.email || '').toLowerCase().trim();
+        if (!stEmail || deletedAtMap.has(stEmail)) continue;
+
+        try {
+          const cust = await prisma.customer.findUnique({
+            where: { email: stEmail },
+            include: { credentials: true },
+          }).catch(() => null);
+
+          if (cust) {
+            if (st.nome && cust.name !== st.nome) {
+              await prisma.customer.update({
+                where: { id: cust.id },
+                data: { name: st.nome },
+              }).catch(() => null);
+            }
+            if (st.senha_plana && cust.credentials.length > 0) {
+              const diff = cust.credentials.some((cr) => cr.plainPassword !== st.senha_plana);
+              if (diff) {
+                await prisma.accessCredentials.updateMany({
+                  where: { customerId: cust.id },
+                  data: { plainPassword: st.senha_plana },
+                }).catch(() => null);
+              }
+            }
+          }
+        } catch {}
       }
     }
 
