@@ -58,13 +58,21 @@ export async function verifyAdminRequest(urlToken?: string, req?: Request): Prom
     }
   } catch {}
 
-  // 3. Token enviado via Headers ou Query Params da requisição (se req foi passado)
+  // 3. Token enviado via Headers, Cookies ou Query Params da requisição (se req foi passado)
   if (req) {
     const headerToken =
       req.headers.get('x-admin-token') ||
       req.headers.get('authorization')?.replace('Bearer ', '')?.trim();
     if (headerToken && masterToken && headerToken === masterToken) {
       return { adminId: 'admin_master', email: adminEmail };
+    }
+    const cookieHeader = req.headers.get('cookie');
+    if (cookieHeader) {
+      const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
+      if (match) {
+        const session = verifySession(match[1]);
+        if (session) return session;
+      }
     }
     try {
       const url = new URL(req.url);

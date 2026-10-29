@@ -59,33 +59,60 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   const admin = await verifyAdminRequest(undefined, req);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {}
+
+  const affId = params.id || body.id;
+  const bodyEmail = (body.email ? String(body.email) : '').toLowerCase().trim();
+  const bodySlug = (body.slug ? String(body.slug) : '').toLowerCase().trim();
+
   try {
     // 0. Busca o parceiro antes de excluir para limpar id, email e slug permanentemente
-    const aff = await prisma.affiliate.findUnique({
-      where: { id: params.id },
+    const aff = await prisma.affiliate.findFirst({
+      where: {
+        OR: [
+          ...(affId ? [{ id: affId }] : []),
+          ...(bodyEmail ? [{ email: bodyEmail }] : []),
+          ...(bodySlug ? [{ slug: bodySlug }] : []),
+        ],
+      },
     }).catch(() => null);
 
-    // 1. Sincroniza exclusão definitiva na HostGator
+    const targetId = aff?.id || affId;
+    const targetEmail = aff?.email || bodyEmail;
+    const targetSlug = aff?.slug || bodySlug;
+
+    // 1. Sincroniza exclusão definitiva na HostGator por id, email e slug
     await syncDeleteAffiliate({
-      id: params.id,
-      email: aff?.email,
-      slug: aff?.slug,
-    }).catch(() => null);
+      id: targetId,
+      email: targetEmail,
+      slug: targetSlug,
+    }).catch((e) => console.warn('[Affiliate Delete] Falha ao excluir na HostGator:', e));
 
     // 2. Desvincula pedidos associados para preservar histórico de pedidos dos clientes
-    await prisma.order.updateMany({
-      where: { affiliateId: params.id },
-      data: { affiliateId: null },
-    }).catch(() => null);
+    if (targetId) {
+      await prisma.order.updateMany({
+        where: { affiliateId: targetId },
+        data: { affiliateId: null, payoutId: null },
+      }).catch(() => null);
 
-    // 3. Remove registros de repasses do afiliado
-    await prisma.affiliatePayout.deleteMany({
-      where: { affiliateId: params.id },
-    }).catch(() => null);
+      // 3. Remove registros de repasses do afiliado
+      await prisma.affiliatePayout.deleteMany({
+        where: { affiliateId: targetId },
+      }).catch(() => null);
+    }
 
-    // 4. Exclui o afiliado do banco de dados local
-    await prisma.affiliate.delete({
-      where: { id: params.id },
+    // 4. Exclui o afiliado do banco de dados local por ID, email e slug
+    await prisma.affiliate.deleteMany({
+      where: {
+        OR: [
+          ...(targetId ? [{ id: targetId }] : []),
+          ...(targetEmail ? [{ email: targetEmail }] : []),
+          ...(targetSlug ? [{ slug: targetSlug }] : []),
+        ],
+      },
     }).catch(() => null);
 
     return NextResponse.json({ ok: true, message: 'Parceiro excluído com sucesso' });

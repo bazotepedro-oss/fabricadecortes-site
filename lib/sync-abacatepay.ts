@@ -53,27 +53,6 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
       }).catch(() => []),
     ]);
 
-    const deletedAtMap = new Map<string, Date>();
-    if (Array.isArray(deletedInfo.deleted)) {
-      for (const item of deletedInfo.deleted) {
-        if (item.email) {
-          const dt = item.excluido_em ? new Date(item.excluido_em) : new Date(0);
-          deletedAtMap.set(item.email, dt);
-        }
-      }
-    }
-    if (Array.isArray(deletedLogs)) {
-      for (const log of deletedLogs) {
-        const email = (log.message || '').toLowerCase().trim();
-        if (email && log.createdAt) {
-          const existing = deletedAtMap.get(email);
-          if (!existing || new Date(log.createdAt) > existing) {
-            deletedAtMap.set(email, new Date(log.createdAt));
-          }
-        }
-      }
-    }
-
     // ── 0A. Hidrata afiliados da HostGator no banco local se necessário ──
     if (Array.isArray(hostgatorAffiliates) && hostgatorAffiliates.length > 0) {
       for (const hg of hostgatorAffiliates) {
@@ -146,28 +125,6 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
         }).catch(() => null);
       } catch (chkErr) {
         console.warn('[Sync AbacatePay] Erro ao purgar checkouts excluídos do banco local:', chkErr);
-      }
-    }
-
-    if (deletedAtMap.size > 0) {
-      try {
-        for (const [delEmail, delTime] of deletedAtMap.entries()) {
-          const cust = await prisma.customer.findFirst({
-            where: { email: delEmail },
-            include: { orders: true },
-          }).catch(() => null);
-          if (cust) {
-            const hasNewerOrder = cust.orders.some((o) => new Date(o.createdAt) > delTime);
-            if (!hasNewerOrder) {
-              await prisma.accessCredentials.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
-              await prisma.subscription.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
-              await prisma.order.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
-              await prisma.customer.delete({ where: { id: cust.id } }).catch(() => null);
-            }
-          }
-        }
-      } catch (delPurgeErr) {
-        console.warn('[Sync AbacatePay] Erro ao purgar clientes excluídos:', delPurgeErr);
       }
     }
 

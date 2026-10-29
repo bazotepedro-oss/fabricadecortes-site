@@ -4,8 +4,8 @@ import { prisma } from '@/lib/db';
 import { syncClearStudents } from '@/lib/members-sync';
 import { listLicensesFromServer, deleteLicenseOnServer } from '@/lib/license-server';
 
-export async function POST() {
-  const auth = await verifyAdminRequest();
+export async function POST(req: Request) {
+  const auth = await verifyAdminRequest(undefined, req);
   if (!auth) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   try {

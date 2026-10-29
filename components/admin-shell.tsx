@@ -718,6 +718,7 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
 
   async function deleteOrder(orderId: string, checkoutId?: string | null, email?: string) {
     if (!window.confirm('Tem certeza que deseja excluir este pedido? As credenciais associadas também serão removidas.')) return;
+    const prevItems = items;
     setItems((prev) => prev.filter((o) => o.id !== orderId));
     try {
       const res = await adminFetch('/api/admin/orders/delete', {
@@ -728,11 +729,11 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
-        setItems(orders);
+        setItems(prevItems);
         alert('Erro ao excluir pedido');
       }
     } catch {
-      setItems(orders);
+      setItems(prevItems);
       alert('Erro ao excluir pedido');
     }
   }
@@ -820,6 +821,7 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
 
   async function deleteSubscription(subscriptionId: string) {
     if (!window.confirm('Tem certeza que deseja excluir esta assinatura? As credenciais associadas também serão removidas.')) return;
+    const prevItems = items;
     setItems((prev) => prev.filter((s) => s.id !== subscriptionId));
     try {
       const res = await adminFetch('/api/admin/subscriptions/delete', {
@@ -830,11 +832,11 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
-        setItems(subscriptions);
+        setItems(prevItems);
         alert('Erro ao excluir assinatura');
       }
     } catch {
-      setItems(subscriptions);
+      setItems(prevItems);
       alert('Erro ao excluir assinatura');
     }
   }
@@ -1050,6 +1052,7 @@ function CustomersPanel({
     if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM? Todos os pedidos, assinaturas, credenciais e licença do Railway serão excluídos.`)) {
       return;
     }
+    const prevItems = items;
     setItems((prev) => prev.filter((c) => c.id !== customerId));
     try {
       const res = await adminFetch('/api/admin/customers/delete', {
@@ -1061,11 +1064,11 @@ function CustomersPanel({
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
-        setItems(customers);
+        setItems(prevItems);
         alert(data.error || 'Erro ao excluir cliente');
       }
     } catch {
-      setItems(customers);
+      setItems(prevItems);
       alert('Erro ao excluir cliente');
     }
   }
@@ -1634,6 +1637,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
 
   async function deleteCred(credId: string, licenseKey?: string | null) {
     if (!window.confirm('Tem certeza que deseja excluir esta credencial? A licença vinculada no Railway também será removida.')) return;
+    const prevItems = items;
     setItems((prev) => prev.filter((c) => c.id !== credId));
     try {
       const res = await adminFetch('/api/admin/credentials/delete', {
@@ -1644,11 +1648,11 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
-        setItems(credentials);
+        setItems(prevItems);
         alert('Erro ao excluir credencial');
       }
     } catch {
-      setItems(credentials);
+      setItems(prevItems);
       alert('Erro ao excluir credencial');
     }
   }
@@ -1914,20 +1918,28 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
       return;
     }
     setDeletingId(aff.id);
-    setItems((prev) => prev.filter((a) => a.id !== aff.id));
+    const prevItems = items;
+    setItems((prev) => prev.filter((a) => a.id !== aff.id && a.email !== aff.email && a.slug !== aff.slug));
     try {
-      const res = await adminFetch(`/api/admin/affiliates/${aff.id}`, {
+      const res = await adminFetch(`/api/admin/affiliates/${encodeURIComponent(aff.id)}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: aff.id,
+          email: aff.email,
+          slug: aff.slug,
+          couponCode: aff.couponCode,
+        }),
       });
+      const json = await res.json().catch(() => ({}));
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
-        setItems(affiliates);
-        const json = await res.json();
+        setItems(prevItems);
         alert(json.error || 'Erro ao remover afiliado');
       }
     } catch {
-      setItems(affiliates);
+      setItems(prevItems);
       alert('Erro de conexão ao remover afiliado');
     } finally {
       setDeletingId(null);

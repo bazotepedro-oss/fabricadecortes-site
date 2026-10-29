@@ -8,7 +8,7 @@ import { courseUrl, colabUrl, generatePassword } from '@/lib/provisioning';
 import { syncAddStudent } from '@/lib/members-sync';
 
 export async function POST(req: Request) {
-  const auth = await verifyAdminRequest();
+  const auth = await verifyAdminRequest(undefined, req);
   if (!auth) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
   let body: any;
