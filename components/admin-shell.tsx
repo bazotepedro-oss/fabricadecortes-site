@@ -2149,11 +2149,10 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-neutral-300">Chave Pix para Repasses</label>
+                  <label className="text-xs font-semibold text-neutral-300">Chave Pix para Repasses (Opcional)</label>
                   <input
-                    required
                     type="text"
-                    placeholder="CPF, E-mail, Celular ou Chave Aleatória"
+                    placeholder="CPF, E-mail, Celular ou 'A combinar'"
                     value={pixKey}
                     onChange={(e) => setPixKey(e.target.value)}
                     className="mt-1 w-full h-9 rounded-lg border border-white/10 bg-black/40 px-3 text-xs text-white font-mono"

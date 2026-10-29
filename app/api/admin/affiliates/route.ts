@@ -6,18 +6,20 @@ import { syncSaveAffiliate, syncListAffiliates } from '@/lib/members-sync';
 import { z } from 'zod';
 
 const CreateSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter no mínimo 2 letras'),
-  email: z.string().email('E-mail do parceiro inválido'),
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 letras').trim(),
+  email: z.string().email('E-mail do parceiro inválido').trim().toLowerCase(),
   slug: z
     .string()
     .min(2, 'Slug deve ter no mínimo 2 letras')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Slug deve conter apenas letras, números e hífens'),
-  couponCode: z.string().min(2, 'Cupom deve ter no mínimo 2 letras'),
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9_-]+$/, 'Slug deve conter apenas letras, números e hífens'),
+  couponCode: z.string().min(2, 'Cupom deve ter no mínimo 2 letras').trim().toUpperCase(),
   discountPercent: z.number().min(0).max(100).default(0),
   commissionPercent: z.number().min(1).max(100).default(20),
-  pixKey: z.string().min(3, 'Chave Pix deve ter no mínimo 3 caracteres'),
+  pixKey: z.string().optional().default('A combinar').transform((v) => (v && v.trim()) ? v.trim() : 'A combinar'),
   pixKeyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).default('cpf'),
-  notes: z.string().optional(),
+  notes: z.string().optional().transform((v) => (v && v.trim()) ? v.trim() : ''),
 });
 
 export async function GET(req: Request) {

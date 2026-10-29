@@ -12,7 +12,7 @@ const UpdateSchema = z.object({
   couponCode: z.string().min(2).optional(),
   discountPercent: z.number().min(0).max(100).optional(),
   commissionPercent: z.number().min(1).max(100).optional(),
-  pixKey: z.string().min(3).optional(),
+  pixKey: z.string().optional().nullable().transform((v) => (v && v.trim()) ? v.trim() : 'A combinar'),
   pixKeyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional(),
   active: z.boolean().optional(),
   notes: z.string().optional().nullable(),

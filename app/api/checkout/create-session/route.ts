@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { rateLimit } from '@/lib/ratelimit';
 import { getPlanId, createCheckout } from '@/lib/abacatepay';
 import { FALLBACK_PLANS } from '@/lib/plans';
+import { syncListAffiliates } from '@/lib/members-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,6 +94,50 @@ export async function POST(req: Request) {
           ],
         },
       });
+
+      if (!affiliate) {
+        const hgAffiliates = await syncListAffiliates().catch(() => []);
+        for (const hg of hgAffiliates) {
+          if (!hg.email || !hg.slug) continue;
+          await prisma.affiliate.upsert({
+            where: { email: hg.email },
+            update: {
+              name: hg.name,
+              slug: hg.slug,
+              token: hg.token,
+              couponCode: hg.couponCode,
+              discountPercent: hg.discountPercent,
+              commissionPercent: hg.commissionPercent,
+              pixKey: hg.pixKey,
+              pixKeyType: hg.pixKeyType,
+              active: hg.active !== false,
+            },
+            create: {
+              id: hg.id || undefined,
+              name: hg.name,
+              email: hg.email,
+              slug: hg.slug,
+              token: hg.token || undefined,
+              couponCode: hg.couponCode,
+              discountPercent: hg.discountPercent,
+              commissionPercent: hg.commissionPercent,
+              pixKey: hg.pixKey,
+              pixKeyType: hg.pixKeyType,
+              active: hg.active !== false,
+            },
+          }).catch(() => null);
+        }
+
+        affiliate = await prisma.affiliate.findFirst({
+          where: {
+            active: true,
+            OR: [
+              { couponCode: codeToSearch },
+              { slug: codeToSearch.toLowerCase() },
+            ],
+          },
+        });
+      }
     } catch (affErr) {
       console.warn('[checkout] Erro ao buscar cupom no banco:', affErr);
     }

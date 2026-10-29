@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
+import { syncListAffiliates } from '@/lib/members-sync';
 import { PartnerPortalClient } from '@/components/partner-portal-client';
 import {
   Users,
@@ -40,6 +41,56 @@ export default async function PartnerPortalPage({ params }: PageProps) {
       },
     },
   });
+
+  if (!affiliate) {
+    try {
+      const hgAffiliates = await syncListAffiliates().catch(() => []);
+      for (const hg of hgAffiliates) {
+        if (!hg.email || !hg.slug) continue;
+        await prisma.affiliate.upsert({
+          where: { email: hg.email },
+          update: {
+            name: hg.name,
+            slug: hg.slug,
+            token: hg.token,
+            couponCode: hg.couponCode,
+            discountPercent: hg.discountPercent,
+            commissionPercent: hg.commissionPercent,
+            pixKey: hg.pixKey,
+            pixKeyType: hg.pixKeyType,
+            active: hg.active !== false,
+          },
+          create: {
+            id: hg.id || undefined,
+            name: hg.name,
+            email: hg.email,
+            slug: hg.slug,
+            token: hg.token || undefined,
+            couponCode: hg.couponCode,
+            discountPercent: hg.discountPercent,
+            commissionPercent: hg.commissionPercent,
+            pixKey: hg.pixKey,
+            pixKeyType: hg.pixKeyType,
+            active: hg.active !== false,
+          },
+        }).catch(() => null);
+      }
+      affiliate = await prisma.affiliate.findUnique({
+        where: { token },
+        include: {
+          orders: {
+            include: { plan: true },
+            orderBy: { createdAt: 'desc' },
+          },
+          payouts: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+    } catch (e) {
+      console.warn('[PartnerPortal] Erro ao hidratar da HostGator:', e);
+    }
+  }
 
   if (!affiliate || !affiliate.active) {
     notFound();
