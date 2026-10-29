@@ -313,7 +313,7 @@ export async function syncSaveAffiliate(affiliate: {
   if (!affiliate.email || !affiliate.name || !affiliate.slug) return false;
   try {
     const apiUrl = getMembersApiUrl();
-    const res = await fetch(${apiUrl}?action=admin_save_affiliate, {
+    const res = await fetch(`${apiUrl}?action=admin_save_affiliate`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
       body: JSON.stringify({
@@ -337,18 +337,18 @@ export async function syncSaveAffiliate(affiliate: {
     const data = await res.json().catch(() => null);
     return !!(res.ok && data?.success);
   } catch (err: any) {
-    console.warn([MembersSync] Erro ao salvar afiliado na HostGator:, err?.message);
+    console.warn(`[MembersSync] Erro ao salvar afiliado na HostGator:`, err?.message);
     return false;
   }
 }
 
 /**
- * Lista todos os afiliados / YouTubers salvos persistentemente na Ãrea de Membros (HostGator)
+ * Lista todos os afiliados / YouTubers salvos persistentemente na Área de Membros (HostGator)
  */
 export async function syncListAffiliates(): Promise<any[]> {
   try {
     const apiUrl = getMembersApiUrl();
-    const res = await fetch(${apiUrl}?action=admin_list_affiliates, {
+    const res = await fetch(`${apiUrl}?action=admin_list_affiliates`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
       body: JSON.stringify({ secret: ADMIN_SECRET }),
@@ -376,19 +376,19 @@ export async function syncListAffiliates(): Promise<any[]> {
     }
     return [];
   } catch (err: any) {
-    console.warn([MembersSync] Erro ao listar afiliados da HostGator:, err?.message);
+    console.warn(`[MembersSync] Erro ao listar afiliados da HostGator:`, err?.message);
     return [];
   }
 }
 
 /**
- * Exclui um afiliado da Ãrea de Membros (HostGator)
+ * Exclui um afiliado da Área de Membros (HostGator)
  */
 export async function syncDeleteAffiliate(idOrEmail: string): Promise<boolean> {
   if (!idOrEmail) return false;
   try {
     const apiUrl = getMembersApiUrl();
-    const res = await fetch(${apiUrl}?action=admin_delete_affiliate, {
+    const res = await fetch(`${apiUrl}?action=admin_delete_affiliate`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
       body: JSON.stringify({
@@ -402,8 +402,7 @@ export async function syncDeleteAffiliate(idOrEmail: string): Promise<boolean> {
     const data = await res.json().catch(() => null);
     return !!(res.ok && data?.success);
   } catch (err: any) {
-    console.warn([MembersSync] Erro ao excluir afiliado na HostGator:, err?.message);
+    console.warn(`[MembersSync] Erro ao excluir afiliado na HostGator:`, err?.message);
     return false;
   }
 }
-
