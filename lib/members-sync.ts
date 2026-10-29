@@ -293,4 +293,117 @@ export async function syncClearStudents(emails?: string[]): Promise<boolean> {
   }
 }
 
+/**
+ * Salva ou atualiza um afiliado / YouTuber na Ãrea de Membros (HostGator)
+ */
+export async function syncSaveAffiliate(affiliate: {
+  id?: string;
+  name: string;
+  email: string;
+  slug: string;
+  token?: string;
+  couponCode?: string;
+  discountPercent?: number;
+  commissionPercent?: number;
+  pixKey?: string;
+  pixKeyType?: string;
+  notes?: string | null;
+  active?: boolean;
+}): Promise<boolean> {
+  if (!affiliate.email || !affiliate.name || !affiliate.slug) return false;
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(${apiUrl}?action=admin_save_affiliate, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({
+        secret: ADMIN_SECRET,
+        id: affiliate.id,
+        name: affiliate.name,
+        email: affiliate.email.toLowerCase().trim(),
+        slug: affiliate.slug.toLowerCase().trim(),
+        token: affiliate.token,
+        coupon_code: affiliate.couponCode || affiliate.slug.toUpperCase().trim(),
+        discount_percent: affiliate.discountPercent || 0,
+        commission_percent: affiliate.commissionPercent || 20,
+        pix_key: affiliate.pixKey || '',
+        pix_key_type: affiliate.pixKeyType || 'cpf',
+        notes: affiliate.notes || '',
+        active: affiliate.active !== false ? 1 : 0,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    return !!(res.ok && data?.success);
+  } catch (err: any) {
+    console.warn([MembersSync] Erro ao salvar afiliado na HostGator:, err?.message);
+    return false;
+  }
+}
+
+/**
+ * Lista todos os afiliados / YouTubers salvos persistentemente na Ãrea de Membros (HostGator)
+ */
+export async function syncListAffiliates(): Promise<any[]> {
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(${apiUrl}?action=admin_list_affiliates, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({ secret: ADMIN_SECRET }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && Array.isArray(data?.affiliates)) {
+      return data.affiliates.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        email: String(a.email || '').toLowerCase().trim(),
+        slug: String(a.slug || '').toLowerCase().trim(),
+        token: a.token,
+        couponCode: String(a.coupon_code || a.slug || '').toUpperCase().trim(),
+        discountPercent: Number(a.discount_percent || 0),
+        commissionPercent: Number(a.commission_percent || 20),
+        pixKey: a.pix_key,
+        pixKeyType: a.pix_key_type || 'cpf',
+        notes: a.notes || null,
+        active: Number(a.active) === 1,
+        createdAt: a.criado_em,
+        updatedAt: a.atualizado_em,
+      }));
+    }
+    return [];
+  } catch (err: any) {
+    console.warn([MembersSync] Erro ao listar afiliados da HostGator:, err?.message);
+    return [];
+  }
+}
+
+/**
+ * Exclui um afiliado da Ãrea de Membros (HostGator)
+ */
+export async function syncDeleteAffiliate(idOrEmail: string): Promise<boolean> {
+  if (!idOrEmail) return false;
+  try {
+    const apiUrl = getMembersApiUrl();
+    const res = await fetch(${apiUrl}?action=admin_delete_affiliate, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({
+        secret: ADMIN_SECRET,
+        id: idOrEmail,
+        email: idOrEmail.toLowerCase().trim(),
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    const data = await res.json().catch(() => null);
+    return !!(res.ok && data?.success);
+  } catch (err: any) {
+    console.warn([MembersSync] Erro ao excluir afiliado na HostGator:, err?.message);
+    return false;
+  }
+}
 

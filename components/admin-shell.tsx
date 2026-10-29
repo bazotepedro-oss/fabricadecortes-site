@@ -1955,6 +1955,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
         setCommissionPercent('20');
         setPixKey('');
         setNotes('');
+        alert(json.message || 'Parceiro cadastrado com sucesso!');
         startTransition(() => router.refresh());
       }
     } catch {

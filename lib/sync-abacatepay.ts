@@ -7,7 +7,7 @@ import {
 } from './license-server';
 import { provision } from './provisioning';
 import { sendRechargeEmail } from './email';
-import { syncListDeletedStudents, syncListStudents } from './members-sync';
+import { syncListDeletedStudents, syncListStudents, syncListAffiliates } from './members-sync';
 import { FALLBACK_PLANS } from './plans';
 
 /**
@@ -38,10 +38,11 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
     const processed: string[] = [];
     const debugInfo: any[] = [];
-    const [railwayLicenses, deletedInfo, hostgatorStudents, lastClearLog, deletedLogs] = await Promise.all([
+    const [railwayLicenses, deletedInfo, hostgatorStudents, hostgatorAffiliates, lastClearLog, deletedLogs] = await Promise.all([
       listLicensesFromServer().catch(() => []),
       syncListDeletedStudents().catch(() => ({ deleted: [], clearedAt: null })),
       syncListStudents().catch(() => []),
+      syncListAffiliates().catch(() => []),
       prisma.auditLog.findFirst({
         where: { eventType: 'crm_cleared' },
         orderBy: { createdAt: 'desc' },
@@ -70,6 +71,42 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
             deletedAtMap.set(email, new Date(log.createdAt));
           }
         }
+      }
+    }
+
+    // ── 0A. Hidrata afiliados da HostGator no banco local se necessário ──
+    if (Array.isArray(hostgatorAffiliates) && hostgatorAffiliates.length > 0) {
+      for (const hg of hostgatorAffiliates) {
+        if (!hg.email || !hg.slug) continue;
+        await prisma.affiliate.upsert({
+          where: { email: hg.email },
+          update: {
+            name: hg.name,
+            slug: hg.slug,
+            token: hg.token,
+            couponCode: hg.couponCode,
+            discountPercent: hg.discountPercent,
+            commissionPercent: hg.commissionPercent,
+            pixKey: hg.pixKey,
+            pixKeyType: hg.pixKeyType,
+            active: hg.active !== false,
+            notes: hg.notes,
+          },
+          create: {
+            id: hg.id || undefined,
+            name: hg.name,
+            email: hg.email,
+            slug: hg.slug,
+            token: hg.token || undefined,
+            couponCode: hg.couponCode,
+            discountPercent: hg.discountPercent,
+            commissionPercent: hg.commissionPercent,
+            pixKey: hg.pixKey,
+            pixKeyType: hg.pixKeyType,
+            active: hg.active !== false,
+            notes: hg.notes,
+          },
+        }).catch(() => null);
       }
     }
 
@@ -221,6 +258,39 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
         const paidDate = new Date(c.updatedAt || c.createdAt || Date.now());
         const orderAmount = Number(c.amount || c.paidAmount || dbPlan?.price || 8690);
 
+        // Identificação e atribuição de Parceiro / YouTuber / Cupom
+        let affiliateId = meta.affiliateId || null;
+        let couponCode = meta.couponCode ? String(meta.couponCode).trim().toUpperCase() : null;
+        let commissionAmount = meta.commissionAmount ? Number(meta.commissionAmount) : null;
+        let commissionStatus: string | null = null;
+
+        if (!affiliateId && (couponCode || meta.affiliateSlug)) {
+          const aff = await prisma.affiliate.findFirst({
+            where: {
+              active: true,
+              OR: [
+                ...(couponCode ? [{ couponCode }] : []),
+                ...(meta.affiliateSlug ? [{ slug: String(meta.affiliateSlug).toLowerCase().trim() }] : []),
+              ],
+            },
+          }).catch(() => null);
+
+          if (aff) {
+            affiliateId = aff.id;
+            couponCode = aff.couponCode;
+            if (!commissionAmount && aff.commissionPercent > 0) {
+              commissionAmount = Math.round((orderAmount * aff.commissionPercent) / 100);
+            }
+          }
+        }
+
+        if (affiliateId) {
+          commissionStatus = 'credited';
+          if (!commissionAmount) {
+            commissionAmount = Math.round((orderAmount * 20) / 100);
+          }
+        }
+
         if (!order) {
           order = await prisma.order.create({
             data: {
@@ -233,6 +303,10 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
               abacateCheckoutId: c.id,
               paidAt: paidDate,
               createdAt: new Date(c.createdAt || Date.now()),
+              affiliateId,
+              couponCode,
+              commissionAmount,
+              commissionStatus,
               metadata: meta,
             },
             include: { customer: true, plan: true },
@@ -243,6 +317,10 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
             data: {
               status: 'paid',
               paidAt: paidDate,
+              affiliateId: order.affiliateId || affiliateId,
+              couponCode: order.couponCode || couponCode,
+              commissionAmount: order.commissionAmount || commissionAmount,
+              commissionStatus: (order.affiliateId || affiliateId) ? 'credited' : order.commissionStatus,
             },
             include: { customer: true, plan: true },
           });

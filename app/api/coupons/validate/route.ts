@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { syncListAffiliates } from '@/lib/members-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +15,8 @@ export async function GET(req: Request) {
 
     const cleanCode = code.trim().toUpperCase();
 
-    // Busca afiliado ativo por cupom ou por slug
-    const affiliate = await prisma.affiliate.findFirst({
+    // 1. Busca afiliado ativo por cupom ou por slug no banco local
+    let affiliate = await prisma.affiliate.findFirst({
       where: {
         active: true,
         OR: [
@@ -32,6 +33,63 @@ export async function GET(req: Request) {
         commissionPercent: true,
       },
     });
+
+    // 2. Se não encontrou no container atual, hidrata da HostGator
+    if (!affiliate) {
+      try {
+        const hgAffiliates = await syncListAffiliates().catch(() => []);
+        for (const hg of hgAffiliates) {
+          if (!hg.email || !hg.slug) continue;
+          await prisma.affiliate.upsert({
+            where: { email: hg.email },
+            update: {
+              name: hg.name,
+              slug: hg.slug,
+              token: hg.token,
+              couponCode: hg.couponCode,
+              discountPercent: hg.discountPercent,
+              commissionPercent: hg.commissionPercent,
+              pixKey: hg.pixKey,
+              pixKeyType: hg.pixKeyType,
+              active: hg.active !== false,
+            },
+            create: {
+              id: hg.id || undefined,
+              name: hg.name,
+              email: hg.email,
+              slug: hg.slug,
+              token: hg.token || undefined,
+              couponCode: hg.couponCode,
+              discountPercent: hg.discountPercent,
+              commissionPercent: hg.commissionPercent,
+              pixKey: hg.pixKey,
+              pixKeyType: hg.pixKeyType,
+              active: hg.active !== false,
+            },
+          }).catch(() => null);
+        }
+
+        affiliate = await prisma.affiliate.findFirst({
+          where: {
+            active: true,
+            OR: [
+              { couponCode: cleanCode },
+              { slug: cleanCode.toLowerCase() },
+            ],
+          },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            couponCode: true,
+            discountPercent: true,
+            commissionPercent: true,
+          },
+        });
+      } catch (hydrateErr) {
+        console.warn('[Coupons API] Erro ao hidratar da HostGator:', hydrateErr);
+      }
+    }
 
     if (!affiliate) {
       return NextResponse.json(
