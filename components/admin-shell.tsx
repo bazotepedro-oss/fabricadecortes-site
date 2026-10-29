@@ -79,6 +79,7 @@ interface Order {
   currency: string;
   createdAt: Date | string;
   paidAt?: Date | string | null;
+  abacateCheckoutId?: string | null;
   customer: Customer;
   plan: Plan;
 }
@@ -983,7 +984,13 @@ function CustomersPanel({
     }
   }
 
-  async function handleDeleteCustomer(customerId: string, customerName: string, customerEmail?: string, licenseKey?: string) {
+  async function handleDeleteCustomer(
+    customerId: string,
+    customerName: string,
+    customerEmail?: string,
+    licenseKey?: string,
+    checkoutId?: string
+  ) {
     if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM? Todos os pedidos, assinaturas, credenciais e licença do Railway serão excluídos.`)) {
       return;
     }
@@ -991,7 +998,7 @@ function CustomersPanel({
       const res = await fetch('/api/admin/customers/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, email: customerEmail, licenseKey }),
+        body: JSON.stringify({ customerId, email: customerEmail, licenseKey, checkoutId }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -1504,7 +1511,10 @@ function CustomersPanel({
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDeleteCustomer(c.id, c.name, c.email, c.credentials?.[0]?.licenseKey)}
+                          onClick={() => {
+                            const chkId = c.orders?.[0]?.abacateCheckoutId;
+                            handleDeleteCustomer(c.id, c.name, c.email, c.credentials?.[0]?.licenseKey, chkId);
+                          }}
                           className="text-xs h-7 px-2"
                           title="Remover cliente do CRM"
                         >

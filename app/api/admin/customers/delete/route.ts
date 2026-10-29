@@ -58,12 +58,37 @@ export async function POST(req: Request) {
     );
 
     // 3. Registra os checkouts específicos deste cliente para não ressuscitarem em sync manual
+    const checkoutsToBlacklist = new Set<string>();
+    if (body.checkoutId) checkoutsToBlacklist.add(String(body.checkoutId).trim());
     if (customer?.orders?.length) {
       for (const ord of customer.orders) {
-        if (ord.abacateCheckoutId) {
-          await syncDeleteCheckout(ord.abacateCheckoutId).catch(() => null);
-        }
+        if (ord.abacateCheckoutId) checkoutsToBlacklist.add(ord.abacateCheckoutId);
       }
+    }
+    // Também localiza na AbacatePay checkouts associados a este e-mail
+    if (targetEmail) {
+      try {
+        const apiKey = process.env.ABACATEPAY_API_KEY || 'abc_dev_zWzyHEKWK5cX6gZf63HUWpZy';
+        const resList = await fetch('https://api.abacatepay.com/v2/checkouts/list', {
+          headers: { Authorization: `Bearer ${apiKey}` },
+          cache: 'no-store',
+        });
+        if (resList.ok) {
+          const listJson = await resList.json();
+          for (const chk of listJson.data || []) {
+            const chkEmail = (chk.metadata?.email || '').toLowerCase().trim();
+            if (chkEmail === targetEmail) {
+              checkoutsToBlacklist.add(chk.id);
+            }
+          }
+        }
+      } catch (errChk) {
+        console.warn('[Customer Delete] Erro ao buscar checkouts da AbacatePay:', errChk);
+      }
+    }
+
+    for (const cId of checkoutsToBlacklist) {
+      await syncDeleteCheckout(cId).catch(() => null);
     }
 
     // 4. Remove credenciais, assinaturas, pedidos e cliente do banco local usando deleteMany (não falha)

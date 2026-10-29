@@ -86,6 +86,54 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
     const deletedCheckoutsSet = new Set<string>(deletedInfo.deletedCheckouts || []);
 
+    // ── 0. Purga registros do banco local que foram excluídos ou limpos em outros containers / HostGator ──
+    if (clearedAt) {
+      try {
+        await prisma.accessCredentials.deleteMany({ where: { createdAt: { lte: clearedAt } } }).catch(() => null);
+        await prisma.subscription.deleteMany({ where: { createdAt: { lte: clearedAt } } }).catch(() => null);
+        await prisma.order.deleteMany({ where: { createdAt: { lte: clearedAt } } }).catch(() => null);
+        await prisma.customer.deleteMany({ where: { createdAt: { lte: clearedAt } } }).catch(() => null);
+      } catch (purgeErr) {
+        console.warn('[Sync AbacatePay] Erro ao limpar histórico local de clearedAt:', purgeErr);
+      }
+    }
+
+    if (deletedCheckoutsSet.size > 0) {
+      try {
+        const checkoutsArr = Array.from(deletedCheckoutsSet);
+        await prisma.accessCredentials.deleteMany({
+          where: { order: { abacateCheckoutId: { in: checkoutsArr } } },
+        }).catch(() => null);
+        await prisma.order.deleteMany({
+          where: { abacateCheckoutId: { in: checkoutsArr } },
+        }).catch(() => null);
+      } catch (chkErr) {
+        console.warn('[Sync AbacatePay] Erro ao purgar checkouts excluídos do banco local:', chkErr);
+      }
+    }
+
+    if (deletedAtMap.size > 0) {
+      try {
+        for (const [delEmail, delTime] of deletedAtMap.entries()) {
+          const cust = await prisma.customer.findFirst({
+            where: { email: delEmail },
+            include: { orders: true },
+          }).catch(() => null);
+          if (cust) {
+            const hasNewerOrder = cust.orders.some((o) => new Date(o.createdAt) > delTime);
+            if (!hasNewerOrder) {
+              await prisma.accessCredentials.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
+              await prisma.subscription.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
+              await prisma.order.deleteMany({ where: { customerId: cust.id } }).catch(() => null);
+              await prisma.customer.delete({ where: { id: cust.id } }).catch(() => null);
+            }
+          }
+        }
+      } catch (delPurgeErr) {
+        console.warn('[Sync AbacatePay] Erro ao purgar clientes excluídos:', delPurgeErr);
+      }
+    }
+
     for (const c of checkouts) {
       if (c.status !== 'PAID') continue;
 
@@ -102,6 +150,12 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
       // 1. Se o checkout ocorreu antes da limpeza total do CRM, ignora histórico antigo
       if (clearedAt && checkoutDate <= clearedAt) {
+        continue;
+      }
+
+      // 2. Se o cliente foi excluído após esta compra, ignora histórico anterior
+      const deletedAt = deletedAtMap.get(customerEmail);
+      if (deletedAt && checkoutDate <= deletedAt) {
         continue;
       }
 

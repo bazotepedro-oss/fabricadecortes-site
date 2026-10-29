@@ -242,6 +242,7 @@ export async function syncClearStudents(emails?: string[]): Promise<boolean> {
       body: JSON.stringify({
         secret: ADMIN_SECRET,
         emails: emails || [],
+        cleared_at: new Date().toISOString(),
       }),
       signal: AbortSignal.timeout(6000),
     });
