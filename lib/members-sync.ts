@@ -384,18 +384,27 @@ export async function syncListAffiliates(): Promise<any[]> {
 /**
  * Exclui um afiliado da Área de Membros (HostGator)
  */
-export async function syncDeleteAffiliate(idOrEmail: string): Promise<boolean> {
-  if (!idOrEmail) return false;
+export async function syncDeleteAffiliate(
+  target: { id?: string; email?: string; slug?: string } | string
+): Promise<boolean> {
+  if (!target) return false;
   try {
     const apiUrl = getMembersApiUrl();
+    const payload: any = { secret: ADMIN_SECRET };
+    if (typeof target === 'string') {
+      payload.id = target;
+      payload.email = target.toLowerCase().trim();
+      payload.slug = target.toLowerCase().trim();
+    } else {
+      if (target.id) payload.id = target.id;
+      if (target.email) payload.email = target.email.toLowerCase().trim();
+      if (target.slug) payload.slug = target.slug.toLowerCase().trim();
+    }
+
     const res = await fetch(`${apiUrl}?action=admin_delete_affiliate`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
-      body: JSON.stringify({
-        secret: ADMIN_SECRET,
-        id: idOrEmail,
-        email: idOrEmail.toLowerCase().trim(),
-      }),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(6000),
     });
 

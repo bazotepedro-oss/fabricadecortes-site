@@ -1,9 +1,9 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { randomBytes, createHash, timingSafeEqual, createHmac } from 'crypto';
 import { prisma } from './db';
 
 const SESSION_COOKIE = 'fv_admin_session';
-const SESSION_TTL_MS = 1000 * 60 * 60 * 8; // 8h
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 dias de sessao ativa permanente
 
 export interface AdminSession {
   adminId: string;
@@ -47,7 +47,18 @@ export async function verifyAdminRequest(urlToken?: string, req?: Request): Prom
     return { adminId: 'admin_master', email: adminEmail };
   }
 
-  // 2. Token enviado via Headers ou Query Params da requisição
+  // 2. Token enviado via Headers globais (next/headers) - funciona em qualquer route handler
+  try {
+    const nextHeaders = await headers();
+    const hToken =
+      nextHeaders.get('x-admin-token') ||
+      nextHeaders.get('authorization')?.replace('Bearer ', '')?.trim();
+    if (hToken && masterToken && hToken === masterToken) {
+      return { adminId: 'admin_master', email: adminEmail };
+    }
+  } catch {}
+
+  // 3. Token enviado via Headers ou Query Params da requisição (se req foi passado)
   if (req) {
     const headerToken =
       req.headers.get('x-admin-token') ||
@@ -64,7 +75,7 @@ export async function verifyAdminRequest(urlToken?: string, req?: Request): Prom
     } catch {}
   }
 
-  // 3. Cookie de sessão autenticada
+  // 4. Cookie de sessão autenticada (30 dias)
   try {
     const cookieStore = cookies();
     const token = (await cookieStore).get(SESSION_COOKIE)?.value;

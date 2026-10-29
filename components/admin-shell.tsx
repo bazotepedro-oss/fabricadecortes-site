@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn, formatPrice } from '@/lib/utils';
@@ -42,6 +42,23 @@ import {
 } from 'lucide-react';
 import type { RailwayLicense } from '@/lib/license-server';
 import { GrantAccessModal } from './grant-access-modal';
+export const ADMIN_MASTER_TOKEN = 'FV291125';
+
+export async function adminFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers || {});
+  if (!headers.has('x-admin-token')) {
+    headers.set('x-admin-token', ADMIN_MASTER_TOKEN);
+  }
+  if (!headers.has('Content-Type') && init.body && typeof init.body === 'string') {
+    headers.set('Content-Type', 'application/json');
+  }
+  return fetch(input, {
+    ...init,
+    headers,
+    credentials: 'include',
+  });
+}
+
 
 // ── Types (mirrored from Prisma) ──────────────────────────────────────────────
 
@@ -158,6 +175,7 @@ interface AdminShellProps {
   events: WebhookEvent[];
   railwayLicenses?: RailwayLicense[];
   affiliates?: Affiliate[];
+  initialToken?: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -217,6 +235,10 @@ function RailwayLicensesPanel({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<RailwayLicense[]>(licenses);
+  useEffect(() => {
+    setItems(licenses);
+  }, [licenses]);
   const [q, setQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -235,7 +257,7 @@ function RailwayLicensesPanel({
   const [msg, setMsg] = useState<{ key: string; text: string; ok: boolean } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const filtered = licenses.filter((l) => {
+  const filtered = items.filter((l) => {
     const term = q.toLowerCase();
     return (
       l.license_key.toLowerCase().includes(term) ||
@@ -249,7 +271,7 @@ function RailwayLicensesPanel({
     setCreating(true);
     setCreateMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/create', {
+      const res = await adminFetch('/api/admin/licenses/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -290,7 +312,7 @@ function RailwayLicensesPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/add-credits', {
+      const res = await adminFetch('/api/admin/licenses/add-credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey, credits: creds }),
@@ -317,7 +339,7 @@ function RailwayLicensesPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/extend-days', {
+      const res = await adminFetch('/api/admin/licenses/extend-days', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey, days }),
@@ -340,7 +362,7 @@ function RailwayLicensesPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/delete', {
+      const res = await adminFetch('/api/admin/licenses/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
@@ -359,7 +381,7 @@ function RailwayLicensesPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/unbind', {
+      const res = await adminFetch('/api/admin/licenses/unbind', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
@@ -378,7 +400,7 @@ function RailwayLicensesPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/toggle', {
+      const res = await adminFetch('/api/admin/licenses/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
@@ -672,6 +694,10 @@ function RailwayLicensesPanel({
 function OrdersPanel({ orders }: { orders: Order[] }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<Order[]>(orders);
+  useEffect(() => {
+    setItems(orders);
+  }, [orders]);
   const [activating, setActivating] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null);
 
@@ -679,7 +705,7 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
     setActivating(orderId);
     setMsg(null);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/activate`, { method: 'POST' });
+      const res = await adminFetch(`/api/admin/orders/${orderId}/activate`, { method: 'POST' });
       const data = await res.json();
       setMsg({ id: orderId, text: data.message ?? (res.ok ? 'Ativado' : 'Erro'), ok: res.ok });
       if (res.ok) startTransition(() => router.refresh());
@@ -692,14 +718,21 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
 
   async function deleteOrder(orderId: string, checkoutId?: string | null, email?: string) {
     if (!window.confirm('Tem certeza que deseja excluir este pedido? As credenciais associadas também serão removidas.')) return;
+    setItems((prev) => prev.filter((o) => o.id !== orderId));
     try {
-      const res = await fetch('/api/admin/orders/delete', {
+      const res = await adminFetch('/api/admin/orders/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, checkoutId, email }),
       });
-      if (res.ok) startTransition(() => router.refresh());
+      if (res.ok) {
+        startTransition(() => router.refresh());
+      } else {
+        setItems(orders);
+        alert('Erro ao excluir pedido');
+      }
     } catch {
+      setItems(orders);
       alert('Erro ao excluir pedido');
     }
   }
@@ -720,7 +753,7 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
           </tr>
         </thead>
         <tbody>
-          {orders.length === 0 && (
+          {items.length === 0 && (
             <tr>
               <td colSpan={8} className="py-12 text-center text-text-secondary">Nenhum pedido ainda.</td>
             </tr>
@@ -780,17 +813,28 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
 function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<Subscription[]>(subscriptions);
+  useEffect(() => {
+    setItems(subscriptions);
+  }, [subscriptions]);
 
   async function deleteSubscription(subscriptionId: string) {
     if (!window.confirm('Tem certeza que deseja excluir esta assinatura? As credenciais associadas também serão removidas.')) return;
+    setItems((prev) => prev.filter((s) => s.id !== subscriptionId));
     try {
-      const res = await fetch('/api/admin/subscriptions/delete', {
+      const res = await adminFetch('/api/admin/subscriptions/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscriptionId }),
       });
-      if (res.ok) startTransition(() => router.refresh());
+      if (res.ok) {
+        startTransition(() => router.refresh());
+      } else {
+        setItems(subscriptions);
+        alert('Erro ao excluir assinatura');
+      }
     } catch {
+      setItems(subscriptions);
       alert('Erro ao excluir assinatura');
     }
   }
@@ -811,12 +855,12 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
           </tr>
         </thead>
         <tbody>
-          {subscriptions.length === 0 && (
+          {items.length === 0 && (
             <tr>
               <td colSpan={8} className="py-12 text-center text-text-secondary">Nenhuma assinatura ainda.</td>
             </tr>
           )}
-          {subscriptions.map((s) => (
+          {items.map((s) => (
             <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
               <td className="py-3 px-4 font-mono text-xs text-text-secondary">{s.id.slice(-8)}</td>
               <td className="py-3 px-4">
@@ -856,6 +900,10 @@ function CustomersPanel({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<Customer[]>(customers);
+  useEffect(() => {
+    setItems(customers);
+  }, [customers]);
   const [q, setQ] = useState('');
   const [workingKey, setWorkingKey] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ key: string; text: string; ok: boolean } | null>(null);
@@ -888,7 +936,7 @@ function CustomersPanel({
     setResendingEmailId(customerId);
     setResendEmailMsg(null);
     try {
-      const res = await fetch('/api/admin/customers/resend-email', {
+      const res = await adminFetch('/api/admin/customers/resend-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId }),
@@ -926,7 +974,7 @@ function CustomersPanel({
     setSavingPassword(true);
     setPasswordFeedback(null);
     try {
-      const res = await fetch('/api/admin/customers/update-password', {
+      const res = await adminFetch('/api/admin/customers/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -964,7 +1012,7 @@ function CustomersPanel({
     if (!editingCustomer) return;
     setSavingEdit(true);
     try {
-      const res = await fetch('/api/admin/customers/edit', {
+      const res = await adminFetch('/api/admin/customers/edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1002,8 +1050,9 @@ function CustomersPanel({
     if (!window.confirm(`Tem certeza que deseja remover o cliente "${customerName}" do CRM? Todos os pedidos, assinaturas, credenciais e licença do Railway serão excluídos.`)) {
       return;
     }
+    setItems((prev) => prev.filter((c) => c.id !== customerId));
     try {
-      const res = await fetch('/api/admin/customers/delete', {
+      const res = await adminFetch('/api/admin/customers/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId, email: customerEmail, licenseKey, checkoutId }),
@@ -1012,9 +1061,11 @@ function CustomersPanel({
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
+        setItems(customers);
         alert(data.error || 'Erro ao excluir cliente');
       }
     } catch {
+      setItems(customers);
       alert('Erro ao excluir cliente');
     }
   }
@@ -1024,22 +1075,25 @@ function CustomersPanel({
       return;
     }
     setClearingCrm(true);
+    setItems([]);
     try {
-      const res = await fetch('/api/admin/customers/clear', { method: 'POST' });
+      const res = await adminFetch('/api/admin/customers/clear', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
+        setItems(customers);
         alert(data.error || 'Erro ao limpar CRM');
       }
     } catch {
+      setItems(customers);
       alert('Erro ao conectar ao servidor para limpar CRM');
     } finally {
       setClearingCrm(false);
     }
   }
 
-  const filtered = customers.filter((c) => {
+  const filtered = items.filter((c) => {
     const term = q.toLowerCase();
     const lk = c.credentials?.[0]?.licenseKey?.toLowerCase() || '';
     return (
@@ -1054,7 +1108,7 @@ function CustomersPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/add-credits', {
+      const res = await adminFetch('/api/admin/licenses/add-credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey, credits: 100 }),
@@ -1073,7 +1127,7 @@ function CustomersPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/unbind', {
+      const res = await adminFetch('/api/admin/licenses/unbind', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
@@ -1092,7 +1146,7 @@ function CustomersPanel({
     setWorkingKey(licenseKey);
     setMsg(null);
     try {
-      const res = await fetch('/api/admin/licenses/toggle', {
+      const res = await adminFetch('/api/admin/licenses/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ licenseKey }),
@@ -1564,7 +1618,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
   async function doAction(credId: string, action: 'revoke' | 'regenerate') {
     setWorking({ id: credId, action });
     try {
-      const res = await fetch(`/api/admin/credentials/${credId}/${action}`, { method: 'POST' });
+      const res = await adminFetch(`/api/admin/credentials/${credId}/${action}`, { method: 'POST' });
       const data = await res.json();
       setMsgs((m) => ({
         ...m,
@@ -1580,14 +1634,21 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
 
   async function deleteCred(credId: string, licenseKey?: string | null) {
     if (!window.confirm('Tem certeza que deseja excluir esta credencial? A licença vinculada no Railway também será removida.')) return;
+    setItems((prev) => prev.filter((c) => c.id !== credId));
     try {
-      const res = await fetch('/api/admin/credentials/delete', {
+      const res = await adminFetch('/api/admin/credentials/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credId, licenseKey }),
       });
-      if (res.ok) startTransition(() => router.refresh());
+      if (res.ok) {
+        startTransition(() => router.refresh());
+      } else {
+        setItems(credentials);
+        alert('Erro ao excluir credencial');
+      }
     } catch {
+      setItems(credentials);
       alert('Erro ao excluir credencial');
     }
   }
@@ -1598,7 +1659,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
     if (!newPass || !newPass.trim()) return;
 
     try {
-      const res = await fetch('/api/admin/customers/update-password', {
+      const res = await adminFetch('/api/admin/customers/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId, email, newPassword: newPass.trim() }),
@@ -1628,7 +1689,7 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
           </tr>
         </thead>
         <tbody>
-          {credentials.length === 0 && (
+          {items.length === 0 && (
             <tr>
               <td colSpan={9} className="py-12 text-center text-text-secondary">Nenhuma credencial ainda.</td>
             </tr>
@@ -1819,6 +1880,10 @@ function EventsPanel({ events }: { events: WebhookEvent[] }) {
 function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [items, setItems] = useState<Affiliate[]>(affiliates);
+  useEffect(() => {
+    setItems(affiliates);
+  }, [affiliates]);
   const [q, setQ] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -1849,20 +1914,20 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
       return;
     }
     setDeletingId(aff.id);
+    setItems((prev) => prev.filter((a) => a.id !== aff.id));
     try {
-      const res = await fetch(`/api/admin/affiliates/${aff.id}`, {
+      const res = await adminFetch(`/api/admin/affiliates/${aff.id}`, {
         method: 'DELETE',
-        headers: {
-          'x-admin-token': 'FV291125',
-        },
       });
       if (res.ok) {
         startTransition(() => router.refresh());
       } else {
+        setItems(affiliates);
         const json = await res.json();
         alert(json.error || 'Erro ao remover afiliado');
       }
     } catch {
+      setItems(affiliates);
       alert('Erro de conexão ao remover afiliado');
     } finally {
       setDeletingId(null);
@@ -1879,7 +1944,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
 
   const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://fabricadecortes.com';
 
-  const enriched = affiliates.map((aff) => {
+  const enriched = items.map((aff) => {
     const paidOrders = (aff.orders || []).filter((o) => o.status === 'paid');
     const totalSales = paidOrders.length;
     const grossRevenue = paidOrders.reduce((acc, o) => acc + (o.amount || 0), 0);
@@ -1923,7 +1988,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
     setCreateError(null);
 
     try {
-      const res = await fetch('/api/admin/affiliates', {
+      const res = await adminFetch('/api/admin/affiliates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1955,6 +2020,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
         setCommissionPercent('20');
         setPixKey('');
         setNotes('');
+        if (json.affiliate) { setItems((prev) => [json.affiliate, ...prev]); }
         alert(json.message || 'Parceiro cadastrado com sucesso!');
         startTransition(() => router.refresh());
       }
@@ -1971,7 +2037,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
     setPayoutError(null);
 
     try {
-      const res = await fetch(`/api/admin/affiliates/${payoutTarget.id}/payout`, {
+      const res = await adminFetch(`/api/admin/affiliates/${payoutTarget.id}/payout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2509,12 +2575,60 @@ export function AdminShell({
   events,
   railwayLicenses = [],
   affiliates = [],
+  initialToken,
 }: AdminShellProps) {
   const [activeTab, setActiveTab] = useState<TabId>('affiliates');
   const [syncing, setSyncing] = useState(false);
   const [showGrantModal, setShowGrantModal] = useState(false);
   const router = useRouter();
   const [, startTransition] = useTransition();
+
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const doRefresh = useCallback(() => {
+    setRefreshing(true);
+    startTransition(() => {
+      router.refresh();
+    });
+    setTimeout(() => setRefreshing(false), 600);
+  }, [router]);
+
+  // Mantem sessao ativa de 30 dias automaticamente
+  useEffect(() => {
+    const token =
+      initialToken ||
+      (typeof window !== 'undefined' ? localStorage.getItem('fv_admin_token') : null) ||
+      'FV291125';
+    if (token) {
+      try {
+        localStorage.setItem('fv_admin_token', token);
+      } catch {}
+      fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: token }),
+        credentials: 'include',
+      }).catch(() => null);
+    }
+  }, [initialToken]);
+
+  // Atualização automática em tempo real a cada 15 segundos
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        doRefresh();
+      }
+    }, 15000);
+
+    const onFocus = () => doRefresh();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [autoRefresh, doRefresh]);
 
   const paidOrders = orders.filter((o) => o.status === 'paid').length;
   const activeSubs = subscriptions.filter((s) => s.status === 'active').length;
@@ -2525,7 +2639,7 @@ export function AdminShell({
   async function handleSync() {
     setSyncing(true);
     try {
-      await fetch('/api/admin/sync', { method: 'POST' });
+      await adminFetch('/api/admin/sync', { method: 'POST' });
       startTransition(() => router.refresh());
     } finally {
       setSyncing(false);
@@ -2533,7 +2647,7 @@ export function AdminShell({
   }
 
   async function logout() {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    await adminFetch('/api/admin/logout', { method: 'POST' });
     router.push('/admin/login');
   }
 
@@ -2592,6 +2706,32 @@ export function AdminShell({
             <span className="text-text-secondary text-sm font-semibold">Painel Admin & CRM</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Auto-Refresh Badge */}
+            <div className="flex items-center gap-1.5 mr-1">
+              <button
+                type="button"
+                onClick={() => setAutoRefresh((v) => !v)}
+                title={autoRefresh ? 'Atualização automática ativa (15s). Clique para pausar.' : 'Atualização automática pausada. Clique para ativar.'}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  autoRefresh
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-sm'
+                    : 'bg-white/5 text-neutral-400 border-white/10'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-emerald-400 animate-pulse' : 'bg-neutral-500'}`} />
+                {autoRefresh ? 'Ao Vivo (15s)' : 'Pausado'}
+              </button>
+              <button
+                type="button"
+                onClick={doRefresh}
+                disabled={refreshing}
+                title="Atualizar painel agora"
+                className="p-1.5 rounded-lg border border-white/10 text-neutral-300 hover:text-white hover:bg-white/5 transition-all text-xs"
+              >
+                <RefreshCcw className={`w-3.5 h-3.5 text-neutral-400 hover:text-brand ${refreshing ? 'animate-spin text-brand' : ''}`} />
+              </button>
+            </div>
+
             <Button
               size="sm"
               onClick={() => setShowGrantModal(true)}

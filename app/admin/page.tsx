@@ -66,6 +66,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       events={events}
       railwayLicenses={railwayLicenses}
       affiliates={affiliates}
+      initialToken={urlToken}
     />
   );
 }

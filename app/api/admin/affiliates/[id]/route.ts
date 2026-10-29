@@ -60,8 +60,17 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   try {
-    // 1. Sincroniza exclusão na HostGator
-    await syncDeleteAffiliate(params.id).catch(() => null);
+    // 0. Busca o parceiro antes de excluir para limpar id, email e slug permanentemente
+    const aff = await prisma.affiliate.findUnique({
+      where: { id: params.id },
+    }).catch(() => null);
+
+    // 1. Sincroniza exclusão definitiva na HostGator
+    await syncDeleteAffiliate({
+      id: params.id,
+      email: aff?.email,
+      slug: aff?.slug,
+    }).catch(() => null);
 
     // 2. Desvincula pedidos associados para preservar histórico de pedidos dos clientes
     await prisma.order.updateMany({
