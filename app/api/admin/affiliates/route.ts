@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       : (typeof rawBody.slug === 'string' ? rawBody.slug.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '') : ''),
     discountPercent: Number(rawBody.discountPercent) || 0,
     commissionPercent: Number(rawBody.commissionPercent) || 20,
-    pixKey: typeof rawBody.pixKey === 'string' ? rawBody.pixKey.trim() : rawBody.pixKey,
+    pixKey: (typeof rawBody.pixKey === 'string' && rawBody.pixKey.trim()) ? rawBody.pixKey.trim() : 'A combinar',
     pixKeyType: rawBody.pixKeyType || 'cpf',
     notes: typeof rawBody.notes === 'string' ? rawBody.notes.trim() : rawBody.notes,
   };

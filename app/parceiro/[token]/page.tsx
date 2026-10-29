@@ -29,7 +29,7 @@ interface PageProps {
 export default async function PartnerPortalPage({ params }: PageProps) {
   const { token } = params;
 
-  const affiliate = await prisma.affiliate.findUnique({
+  let affiliate = await prisma.affiliate.findUnique({
     where: { token },
     include: {
       orders: {
