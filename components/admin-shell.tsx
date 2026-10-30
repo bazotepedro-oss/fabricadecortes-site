@@ -180,8 +180,16 @@ interface AdminShellProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const fmt = (d: Date | string | null | undefined) =>
-  d ? new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+const fmt = (d: Date | string | null | undefined) => {
+  if (!d) return '—';
+  try {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  } catch {
+    return '—';
+  }
+};
 
 const statusColor: Record<string, 'success' | 'brand' | 'default' | 'outline'> = {
   paid: 'success',
@@ -258,9 +266,9 @@ function RailwayLicensesPanel({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const filtered = items.filter((l) => {
-    const term = q.toLowerCase();
+    const term = (q || '').toLowerCase();
     return (
-      l.license_key.toLowerCase().includes(term) ||
+      (l.license_key || '').toLowerCase().includes(term) ||
       (l.plan || '').toLowerCase().includes(term) ||
       (l.hwid || '').toLowerCase().includes(term)
     );
@@ -576,8 +584,8 @@ function RailwayLicensesPanel({
               </tr>
             )}
             {filtered.map((l) => {
-              const expDate = l.exp ? new Date(l.exp * 1000).toLocaleDateString('pt-BR') : '—';
-              const isExpired = l.exp ? l.exp * 1000 < Date.now() : false;
+              const expDate = (typeof l.exp === 'number' && !isNaN(l.exp)) ? new Date(l.exp * 1000).toLocaleDateString('pt-BR') : '—';
+              const isExpired = (typeof l.exp === 'number' && !isNaN(l.exp)) ? l.exp * 1000 < Date.now() : false;
 
               return (
                 <tr key={l.license_key} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -759,15 +767,15 @@ function OrdersPanel({ orders }: { orders: Order[] }) {
               <td colSpan={8} className="py-12 text-center text-text-secondary">Nenhum pedido ainda.</td>
             </tr>
           )}
-          {orders.map((o) => (
+          {items.map((o) => (
             <tr key={o.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-              <td className="py-3 px-4 font-mono text-xs text-text-secondary">{o.id.slice(-8)}</td>
+              <td className="py-3 px-4 font-mono text-xs text-text-secondary">{o.id ? o.id.slice(-8) : '—'}</td>
               <td className="py-3 px-4">
-                <div className="font-medium text-text-primary">{o.customer.name}</div>
-                <div className="text-xs text-text-secondary">{o.customer.email}</div>
+                <div className="font-medium text-text-primary">{o.customer?.name || 'Cliente'}</div>
+                <div className="text-xs text-text-secondary">{o.customer?.email || '—'}</div>
               </td>
-              <td className="py-3 px-4 text-text-secondary">{o.plan.name}</td>
-              <td className="py-3 px-4 font-semibold">{formatPrice(o.amount, o.currency)}</td>
+              <td className="py-3 px-4 text-text-secondary">{o.plan?.name || 'Plano'}</td>
+              <td className="py-3 px-4 font-semibold">{formatPrice(o.amount || 0, o.currency || 'BRL')}</td>
               <td className="py-3 px-4"><StatusBadge status={o.status} /></td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(o.createdAt)}</td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(o.paidAt)}</td>
@@ -864,12 +872,12 @@ function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscription[] }
           )}
           {items.map((s) => (
             <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-              <td className="py-3 px-4 font-mono text-xs text-text-secondary">{s.id.slice(-8)}</td>
+              <td className="py-3 px-4 font-mono text-xs text-text-secondary">{s.id ? s.id.slice(-8) : '—'}</td>
               <td className="py-3 px-4">
-                <div className="font-medium text-text-primary">{s.customer.name}</div>
-                <div className="text-xs text-text-secondary">{s.customer.email}</div>
+                <div className="font-medium text-text-primary">{s.customer?.name || 'Cliente'}</div>
+                <div className="text-xs text-text-secondary">{s.customer?.email || '—'}</div>
               </td>
-              <td className="py-3 px-4 text-text-secondary">{s.plan.name}</td>
+              <td className="py-3 px-4 text-text-secondary">{s.plan?.name || 'Plano'}</td>
               <td className="py-3 px-4 text-text-secondary">{s.provider}</td>
               <td className="py-3 px-4"><StatusBadge status={s.status} /></td>
               <td className="py-3 px-4 text-text-secondary text-xs">{fmt(s.currentPeriodEnd)}</td>
@@ -1097,11 +1105,11 @@ function CustomersPanel({
   }
 
   const filtered = items.filter((c) => {
-    const term = q.toLowerCase();
+    const term = (q || '').toLowerCase();
     const lk = c.credentials?.[0]?.licenseKey?.toLowerCase() || '';
     return (
-      c.name.toLowerCase().includes(term) ||
-      c.email.toLowerCase().includes(term) ||
+      (c.name || '').toLowerCase().includes(term) ||
+      (c.email || '').toLowerCase().includes(term) ||
       (c.phone || '').includes(term) ||
       lk.includes(term)
     );
@@ -1401,7 +1409,7 @@ function CustomersPanel({
               const primaryCred = c.credentials?.[0];
               const lk = primaryCred?.licenseKey;
               const studentPassword = primaryCred?.plainPassword || 'membro123';
-              const studentUsername = primaryCred?.username || c.email.split('@')[0];
+              const studentUsername = primaryCred?.username || (c.email ? c.email.split('@')[0] : 'aluno');
 
               return (
                 <tr key={c.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -1737,8 +1745,8 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
                 </td>
                 <td className="py-3 px-4 font-mono text-xs text-brand font-bold">{c.licenseKey || '—'}</td>
                 <td className="py-3 px-4">
-                  <div className="font-medium text-text-primary">{c.customer.name}</div>
-                  <div className="text-xs text-text-secondary">{c.customer.email}</div>
+                  <div className="font-medium text-text-primary">{c.customer?.name || c.username || 'Cliente'}</div>
+                  <div className="text-xs text-text-secondary">{c.customer?.email || c.username || '—'}</div>
                 </td>
                 <td className="py-3 px-4">
                   <a
@@ -1765,12 +1773,12 @@ function CredentialsPanel({ credentials }: { credentials: Credential[] }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => openPasswordModal({
-                          id: c.customer?.id || c.customerId,
-                          name: c.customer?.name || c.username,
-                          email: c.customer?.email || c.username,
-                          credentials: [c],
-                        })}
+                        onClick={() => changeCredPassword(
+                          c.customer?.id || c.customerId,
+                          c.customer?.email || c.username,
+                          c.customer?.name || c.username,
+                          pass
+                        )}
                         className="text-xs h-7 px-2 text-amber-400 hover:text-amber-300 border border-amber-400/20 hover:bg-amber-400/10"
                         title="Alterar Senha do Aluno"
                       >
@@ -1846,18 +1854,17 @@ function EventsPanel({ events }: { events: WebhookEvent[] }) {
             </tr>
           )}
           {events.map((e) => (
-            <>
+            <React.Fragment key={e.id}>
               <tr
-                key={e.id}
                 className="border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer"
                 onClick={() => setExpanded(expanded === e.id ? null : e.id)}
               >
-                <td className="py-3 px-4 font-mono text-xs text-text-secondary">{e.eventId.slice(-12)}</td>
-                <td className="py-3 px-4 text-text-secondary">{e.provider}</td>
+                <td className="py-3 px-4 font-mono text-xs text-text-secondary">{e.eventId ? e.eventId.slice(-12) : '—'}</td>
+                <td className="py-3 px-4 text-text-secondary">{e.provider || '—'}</td>
                 <td className="py-3 px-4">
-                  <span className="font-mono text-xs bg-surface rounded px-1.5 py-0.5 text-brand">{e.type}</span>
+                  <span className="font-mono text-xs bg-surface rounded px-1.5 py-0.5 text-brand">{e.type || 'evento'}</span>
                 </td>
-                <td className="py-3 px-4 font-mono text-xs text-text-secondary">{e.orderId?.slice(-8) ?? '—'}</td>
+                <td className="py-3 px-4 font-mono text-xs text-text-secondary">{e.orderId ? e.orderId.slice(-8) : '—'}</td>
                 <td className="py-3 px-4">
                   {e.processed
                     ? <CheckCircle2 className="w-4 h-4 text-success" />
@@ -1875,7 +1882,7 @@ function EventsPanel({ events }: { events: WebhookEvent[] }) {
                   </td>
                 </tr>
               )}
-            </>
+            </React.Fragment>
           ))}
         </tbody>
       </table>
@@ -1988,13 +1995,13 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
   const totalPendingPayoutAll = enriched.reduce((acc, a) => acc + a.pendingCommission, 0);
 
   const filtered = enriched.filter((a) => {
-    const term = q.toLowerCase();
+    const term = (q || '').toLowerCase();
     return (
-      a.name.toLowerCase().includes(term) ||
-      a.email.toLowerCase().includes(term) ||
-      a.slug.toLowerCase().includes(term) ||
-      a.couponCode.toLowerCase().includes(term) ||
-      a.pixKey.toLowerCase().includes(term)
+      (a.name || '').toLowerCase().includes(term) ||
+      (a.email || '').toLowerCase().includes(term) ||
+      (a.slug || '').toLowerCase().includes(term) ||
+      (a.couponCode || '').toLowerCase().includes(term) ||
+      (a.pixKey || '').toLowerCase().includes(term)
     );
   });
 
@@ -2332,7 +2339,7 @@ function AffiliatesPanel({ affiliates }: { affiliates: Affiliate[] }) {
 
                 <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-neutral-400 block">Chave Pix ({payoutTarget.pixKeyType.toUpperCase()}):</span>
+                    <span className="text-[10px] text-neutral-400 block">Chave Pix ({(payoutTarget.pixKeyType || 'PIX').toUpperCase()}):</span>
                     <span className="font-mono text-sm text-white font-bold select-all">
                       {payoutTarget.pixKey}
                     </span>
@@ -2584,11 +2591,11 @@ function StatCard({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function AdminShell({
-  orders,
-  subscriptions,
-  customers,
-  credentials,
-  events,
+  orders = [],
+  subscriptions = [],
+  customers = [],
+  credentials = [],
+  events = [],
   railwayLicenses = [],
   affiliates = [],
   initialToken,
