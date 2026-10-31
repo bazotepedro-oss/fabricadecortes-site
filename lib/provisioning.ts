@@ -56,7 +56,7 @@ export function generatePassword(length = 12): string {
 export function driveUrl(): string {
   return (
     process.env.GOOGLE_DRIVE_URL ||
-    'https://drive.google.com/drive/u/4/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf'
+    'https://drive.google.com/drive/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf'
   );
 }
 

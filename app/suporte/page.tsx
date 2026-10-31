@@ -81,7 +81,7 @@ export default function SuportePage() {
             <div className="pt-2">
               <Button asChild size="sm" className="w-full sm:w-auto bg-brand hover:bg-brand/90 text-white font-bold">
                 <a
-                  href="https://drive.google.com/drive/u/4/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf"
+                  href="https://drive.google.com/drive/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf"
                   target="_blank"
                   rel="noreferrer"
                 >

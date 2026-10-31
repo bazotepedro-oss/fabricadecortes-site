@@ -76,7 +76,7 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
   const driveLink =
     input.driveUrl ||
     process.env.GOOGLE_DRIVE_URL ||
-    'https://drive.google.com/drive/u/4/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf';
+    'https://drive.google.com/drive/folders/16U_qUEtjAlgmgmeX_HWuqPw-3dYgoekf';
   const whatsappLink =
     input.whatsappUrl ||
     process.env.WHATSAPP_GROUP_URL ||
