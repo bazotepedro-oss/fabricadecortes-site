@@ -142,8 +142,9 @@ export async function syncAbacatePay(): Promise<{ synced: number; processed: str
 
       const checkoutDate = new Date(c.createdAt || Date.now());
 
-      // 1. Se o checkout ocorreu antes da limpeza total do CRM, ignora histórico antigo
-      if (clearedAt && checkoutDate <= clearedAt) {
+      // 1. Ignora histórico antigo de checkouts de teste (anteriores a 30/10/2026 18:00 UTC) ou da limpeza do CRM
+      const CUTOFF_DATE = new Date('2026-10-30T18:00:00.000Z');
+      if (checkoutDate < CUTOFF_DATE || (clearedAt && checkoutDate <= clearedAt)) {
         continue;
       }
 
