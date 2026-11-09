@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Flame,
@@ -16,6 +16,19 @@ import { VslOverlay } from '@/components/vsl-overlay';
 
 export function Hero() {
   const [vslOpen, setVslOpen] = useState(false);
+  const youtubeConfigured = Boolean(process.env.NEXT_PUBLIC_VSL_YOUTUBE_URL);
+
+  useEffect(() => {
+    if (!youtubeConfigured || typeof window === 'undefined') return;
+    if (window.sessionStorage.getItem('fdc_vsl_auto_opened') === '1') return;
+
+    const timer = window.setTimeout(() => {
+      setVslOpen(true);
+      window.sessionStorage.setItem('fdc_vsl_auto_opened', '1');
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [youtubeConfigured]);
 
   return (
     <section className="relative overflow-hidden border-b border-border py-16 md:py-24">
