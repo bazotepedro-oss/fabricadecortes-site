@@ -3,7 +3,7 @@ import { verifyAdminRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { syncEditStudent } from '@/lib/members-sync';
-import { listLicensesFromServer, createLicenseOnServer, addCreditsOnServer } from '@/lib/license-server';
+import { listLicensesFromServer, createLicenseOnServer, addCreditsOnServer, deleteLicenseOnServer } from '@/lib/license-server';
 
 export async function POST(req: Request) {
   const auth = await verifyAdminRequest(undefined, req);
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     }
 
     // 3. Atualiza ou cria as credenciais no Prisma
+    const previousLicenseKey = customer.credentials?.[0]?.licenseKey?.trim().toUpperCase() || null;
     const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.fabricadecortes.com').replace(/\/$/, '');
     let passwordHash: string | undefined;
     if (password) {
@@ -119,6 +120,7 @@ export async function POST(req: Request) {
 
     // 4. Se uma chave de licença foi inserida ou alterada, garante a licença no Railway
     //    preservando os créditos e a validade reais do cliente (nunca um valor fixo).
+    let removedOldKey = false;
     if (licenseKey) {
       try {
         const credential = customer.credentials?.[0];
@@ -151,6 +153,22 @@ export async function POST(req: Request) {
           );
           if (!added.ok) throw new Error(added.message || 'Falha ao sincronizar créditos no Railway');
         }
+
+        // Ao renomear a chave, remove a licença antiga do Railway para não duplicar.
+        if (previousLicenseKey && previousLicenseKey !== licenseKey) {
+          const inUseByAnother = await prisma.accessCredentials
+            .count({ where: { licenseKey: previousLicenseKey, customerId: { not: customer.id } } })
+            .catch(() => 0);
+          const oldOnRailway = allRailway.some((l) => l.license_key.toUpperCase() === previousLicenseKey);
+          if (inUseByAnother === 0 && oldOnRailway) {
+            const removed = await deleteLicenseOnServer(previousLicenseKey).catch(() => ({ ok: false }));
+            if (removed.ok) {
+              removedOldKey = true;
+            } else {
+              console.warn('[Admin Edit] Falha ao remover chave anterior do Railway:', previousLicenseKey);
+            }
+          }
+        }
       } catch (railErr) {
         console.warn('[Admin Edit] Falha ao verificar/criar chave no Railway:', railErr);
         return NextResponse.json({ error: 'Não foi possível confirmar ou criar a licença no Railway. Alteração não concluída.' }, { status: 502 });
@@ -167,7 +185,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: `Cliente ${customer.name} atualizado com sucesso!${membersSynced ? ' (Sincronizado na Área de Membros)' : ''}`,
+      message: `Cliente ${customer.name} atualizado com sucesso!${removedOldKey ? ' Chave anterior removida do Railway.' : ''}${membersSynced ? ' (Sincronizado na Área de Membros)' : ''}`,
       customer,
       membersSynced,
     });

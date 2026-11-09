@@ -14,6 +14,10 @@ import {
   Building2,
   Calendar,
   HelpCircle,
+  Headphones,
+  Banknote,
+  MessageCircle,
+  ArrowUpRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -112,6 +116,15 @@ export default async function PartnerPortalPage({ params }: PageProps) {
     .reduce((acc, o) => acc + (o.commissionAmount || 0), 0);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com';
+  const supportPhone = '5518988122319';
+  const supportDisplay = '(18) 98812-2319';
+  const pendingFormatted = (pendingCommissionCents / 100).toFixed(2).replace('.', ',');
+  const payoutHref = `https://wa.me/${supportPhone}?text=${encodeURIComponent(
+    `Olá! Sou ${affiliate.name} (cupom ${affiliate.couponCode}), parceiro da Fábrica dos Cortes. Quero solicitar o saque da minha comissão de R$ ${pendingFormatted} via Pix na chave ${affiliate.pixKey} (${affiliate.pixKeyType.toUpperCase()}).`,
+  )}`;
+  const supportHref = `https://wa.me/${supportPhone}?text=${encodeURIComponent(
+    `Olá! Sou ${affiliate.name} (cupom ${affiliate.couponCode}), parceiro da Fábrica dos Cortes. Preciso de ajuda com o portal de parceiro.`,
+  )}`;
 
   return (
     <div className="min-h-screen bg-[#08080a] text-white selection:bg-brand selection:text-white">
@@ -167,14 +180,22 @@ export default async function PartnerPortalPage({ params }: PageProps) {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/40 p-4 sm:p-5 text-right shrink-0">
-              <span className="text-xs text-neutral-400 block font-medium">Saldo a Receber (Pix)</span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-400">
-                R$ {(pendingCommissionCents / 100).toFixed(2).replace('.', ',')}
+            <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.12] via-black/40 to-black/40 p-4 sm:p-5 text-right shrink-0 min-w-[260px] shadow-[0_10px_40px_-15px_rgba(16,185,129,0.35)]">
+              <span className="text-[11px] text-neutral-300 block font-semibold uppercase tracking-wider">Saldo a Receber (Pix)</span>
+              <span className="text-3xl font-black text-emerald-400">
+                R$ {pendingFormatted}
               </span>
-              <span className="text-[11px] text-neutral-400 block mt-1">
+              <span className="text-[11px] text-neutral-400 block mt-1 mb-3">
                 Chave Pix: <strong className="text-white font-mono">{affiliate.pixKey}</strong>
               </span>
+              <a
+                href={payoutHref}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-black transition-colors hover:bg-emerald-400"
+              >
+                <Banknote className="h-4 w-4" /> Solicitar saque via Pix
+              </a>
             </div>
           </div>
         </div>
@@ -225,6 +246,55 @@ export default async function PartnerPortalPage({ params }: PageProps) {
         </div>
 
         {/* ── Ferramentas de Divulgação (Client Component com Copiar) ── */}
+        {/* Central de Ajuda e Saque */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <a
+            href={payoutHref}
+            target="_blank"
+            rel="noreferrer"
+            className="group relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.10] to-[#121215] p-5 transition-all hover:border-emerald-400/50 hover:shadow-[0_12px_40px_-18px_rgba(16,185,129,0.5)]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="rounded-xl border border-emerald-500/25 bg-emerald-500/15 p-2.5">
+                  <Banknote className="h-5 w-5 text-emerald-400" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-white">Solicitar saque via Pix</p>
+                  <p className="text-xs text-neutral-400">Saldo disponível: R$ {pendingFormatted}</p>
+                </div>
+              </div>
+              <ArrowUpRight className="h-4 w-4 text-emerald-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-400">
+              Abre o WhatsApp com sua chave Pix e o valor já preenchidos. O repasse é feito pela equipe no fechamento.
+            </p>
+          </a>
+
+          <a
+            href={supportHref}
+            target="_blank"
+            rel="noreferrer"
+            className="group relative overflow-hidden rounded-2xl border border-orange-500/25 bg-gradient-to-br from-orange-500/[0.10] to-[#121215] p-5 transition-all hover:border-orange-400/50 hover:shadow-[0_12px_40px_-18px_rgba(249,115,22,0.5)]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="rounded-xl border border-orange-500/25 bg-orange-500/15 p-2.5">
+                  <Headphones className="h-5 w-5 text-orange-400" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-white">Falar com o suporte</p>
+                  <p className="text-xs text-neutral-400">WhatsApp {supportDisplay}</p>
+                </div>
+              </div>
+              <ArrowUpRight className="h-4 w-4 text-orange-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-neutral-400">
+              Dúvidas sobre links, cupons, comissões ou campanhas? Fale direto com a equipe da Fábrica dos Cortes.
+            </p>
+          </a>
+        </div>
+
         <PartnerPortalClient affiliate={affiliate} appUrl={appUrl} />
 
         {/* ── Tabela de Vendas em Tempo Real ── */}
@@ -320,6 +390,14 @@ export default async function PartnerPortalPage({ params }: PageProps) {
           <p>
             • Precisa atualizar sua chave Pix ou tirar alguma dúvida sobre campanhas? Entre em contato diretamente com o suporte da Fábrica dos Cortes.
           </p>
+          <a
+            href={supportHref}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-2.5 text-xs font-bold text-orange-300 transition-colors hover:bg-orange-500/20"
+          >
+            <MessageCircle className="h-4 w-4" /> Falar no WhatsApp {supportDisplay}
+          </a>
         </div>
       </main>
     </div>
