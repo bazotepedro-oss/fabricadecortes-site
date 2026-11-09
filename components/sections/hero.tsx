@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Flame,
@@ -7,14 +8,15 @@ import {
   ArrowRight,
   CheckCircle2,
   Sliders,
-  ScanFace,
-  Captions,
-  Gauge,
   Star,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { VslOverlay } from '@/components/vsl-overlay';
 
 export function Hero() {
+  const [vslOpen, setVslOpen] = useState(false);
+
   return (
     <section className="relative overflow-hidden border-b border-border py-16 md:py-24">
       {/* Background Ambient Glows */}
@@ -26,13 +28,13 @@ export function Hero() {
       <div className="relative mx-auto w-full max-w-6xl px-4">
         <div className="grid items-center gap-12 lg:grid-cols-12">
           {/* Left Column: Copy & Value Proposition */}
-          <div className="space-y-7 lg:col-span-7 text-center lg:text-left">
+          <div className="space-y-7 lg:col-span-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand/50 bg-brand/10 px-4 py-1.5 text-xs font-bold text-brand shadow-[0_0_20px_rgba(255,92,0,0.25)]">
               <Flame className="h-4 w-4 animate-pulse text-brand" />
               <span>Sem Mensalidade Presa • 1 Crédito = 1 Vídeo Pronto</span>
             </div>
 
-            <h1 className="font-display text-4xl font-extrabold leading-[1.10] tracking-tight text-text-primary sm:text-5xl lg:text-6xl">
+            <h1 className="font-display text-4xl font-extrabold leading-[1.10] tracking-tight text-text-primary sm:text-5xl lg:text-5xl xl:text-6xl">
               Corte podcasts e vídeos longos em{' '}
               <span className="bg-gradient-to-r from-brand via-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
                 virais milionários
@@ -67,6 +69,20 @@ export function Hero() {
                   Recarregar Licença
                 </Button>
               </Link>
+            </div>
+
+            {/* Atalho para a VSL */}
+            <div className="flex justify-center lg:justify-start">
+              <button
+                type="button"
+                onClick={() => setVslOpen(true)}
+                className="group inline-flex items-center gap-2.5 text-xs font-bold text-text-secondary transition-colors hover:text-white"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand/30 bg-brand/10 text-brand transition-colors group-hover:bg-brand/20">
+                  <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
+                </span>
+                Assistir à apresentação em 6 minutos
+              </button>
             </div>
 
             {/* Social proof + trust */}
@@ -111,72 +127,72 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Moldura de Celular com o Vídeo Real */}
-          <div className="relative lg:col-span-5 flex justify-center">
-            {/* Ambient Halo Behind Phone */}
-            <div className="absolute inset-0 rounded-full bg-brand/25 blur-3xl transform scale-90" />
+          {/* Right Column: VSL em destaque */}
+          <div className="relative flex justify-center lg:col-span-6">
+            <div className="absolute -inset-6 rounded-[40px] bg-brand/10 blur-3xl" />
 
-            {/* Floating feature chips */}
-            <div className="absolute -left-2 top-14 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15 text-brand">
-                <ScanFace className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[11px] font-bold leading-tight text-white">Enquadramento automático</p>
-                <p className="text-[10px] text-text-secondary">o rosto sempre no centro</p>
-              </div>
-            </div>
+            <div className="relative w-full max-w-2xl">
+              <button
+                type="button"
+                onClick={() => setVslOpen(true)}
+                aria-label="Assistir à apresentação em vídeo"
+                className="group relative block w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0B0B0D] text-left shadow-[0_30px_90px_-30px_rgba(255,107,26,0.45)] transition-transform duration-300 hover:scale-[1.01]"
+              >
+                <div className="relative aspect-video w-full">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,107,26,0.22),transparent_65%)]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,black,transparent)]" />
 
-            <div className="absolute -right-1 top-1/2 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/15 text-fuchsia-400">
-                <Captions className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[11px] font-bold leading-tight text-white">Legendas automáticas</p>
-                <p className="text-[10px] text-text-secondary">palavra por palavra</p>
-              </div>
-            </div>
+                  {/* Topo do player */}
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src="/logo.png"
+                        alt="Fábrica dos Cortes"
+                        className="h-8 w-8 rounded-lg object-contain"
+                      />
+                      <span className="text-xs font-extrabold tracking-tight text-white">
+                        Fábrica dos Cortes
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70">
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand" /> VSL oficial
+                    </span>
+                  </div>
 
-            <div className="absolute -left-3 bottom-16 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
-                <Gauge className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-[11px] font-bold leading-tight text-white">Vídeo pronto</p>
-                <p className="text-[10px] text-text-secondary">é só postar</p>
-              </div>
-            </div>
+                  {/* Play central */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
+                    <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-brand text-white shadow-[0_0_45px_rgba(255,107,26,0.65)] transition-transform duration-300 group-hover:scale-105">
+                      <span className="absolute inset-0 animate-ping rounded-full bg-brand/35" />
+                      <Play className="relative ml-1 h-7 w-7 fill-white" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-white">
+                        Assistir à apresentação
+                      </p>
+                      <p className="mt-1 text-[11px] text-white/60">
+                        Veja como funciona em 6 minutos
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Smartphone Frame — Moldura Limpa e Elegante */}
-            <div className="relative w-full max-w-[310px] sm:max-w-[330px] rounded-[48px] border-[6px] border-neutral-700/80 bg-neutral-950 p-2.5 sm:p-3 shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_60px_rgba(255,92,0,0.25)] ring-1 ring-white/10 backdrop-blur-xl">
-              {/* Speaker / Dynamic Island Notch */}
-              <div className="mx-auto mb-2.5 h-4 w-28 rounded-full bg-black border border-white/10 flex items-center justify-center gap-2">
-                <div className="h-1.5 w-10 rounded-full bg-neutral-700" />
-                <div className="h-2 w-2 rounded-full bg-neutral-800 border border-white/5" />
-              </div>
+                  {/* Base do player */}
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-white/10 bg-black/50 px-5 py-3 backdrop-blur-sm">
+                    <span className="text-[11px] font-semibold text-white/70">
+                      Menos edição. Mais conteúdo no ar.
+                    </span>
+                    <span className="text-[11px] font-bold text-white/60">6 min</span>
+                  </div>
+                </div>
+              </button>
 
-              {/* Video Player Display Area (9:16 Aspect) */}
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[36px] bg-black shadow-inner border border-white/10">
-                <video
-                  src="/videos/demo.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  controls={false}
-                  className="h-full w-full object-cover"
-                />
-
-                {/* Subtle Glass Reflection Overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent" />
-              </div>
-
-              {/* Bottom Phone Indicator */}
-              <div className="mx-auto mt-2.5 h-1 w-28 rounded-full bg-white/25" />
+              <p className="mt-3 text-center text-[11px] text-text-secondary">
+                Clique para assistir com som — sem sair da página.
+              </p>
             </div>
           </div>
         </div>
       </div>
+      <VslOverlay open={vslOpen} onClose={() => setVslOpen(false)} />
     </section>
   );
 }
