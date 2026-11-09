@@ -7,7 +7,7 @@ async function main() {
   }
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
   const eventId = `evt_staging_${randomUUID()}`;
-  const email = `webhook-${randomUUID()}@example.test`;
+  const email = (process.env.FDC_TEST_EMAIL || `webhook-${randomUUID()}@example.test`).trim();
   const customer = await prisma.customer.upsert({
     where: { email },
     update: {},
