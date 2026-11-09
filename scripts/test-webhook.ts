@@ -11,7 +11,7 @@ async function main() {
   const customer = await prisma.customer.upsert({
     where: { email },
     update: {},
-    create: { name: 'Cliente Staging', email },
+    create: { name: 'Cliente Teste E2E', email },
   });
   const plan = await prisma.plan.upsert({
     where: { slug: 'pack_criador' },

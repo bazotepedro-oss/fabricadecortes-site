@@ -23,7 +23,7 @@ function getLogoAttachments() {
           filename: 'logo.png',
           content: buffer,
           contentType: 'image/png',
-          inlineContentId: 'brand-logo',
+          contentId: 'brand-logo',
         },
       ];
     }
@@ -141,7 +141,7 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
       <div style="background:linear-gradient(180deg, #181920 0%, #0F1014 100%);border:2px solid #FF5C00;border-radius:16px;padding:22px 20px;margin:22px 0;box-shadow:0 8px 30px rgba(255,92,0,0.25);text-align:left;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <span style="background:linear-gradient(135deg, #FF6B00, #FF3300);color:#FFFFFF;font-size:10px;font-weight:900;padding:4px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:1px;">
-            VIP NETFLIX
+            ÁREA DE MEMBROS VIP
           </span>
           <span style="color:#FFFFFF;font-size:16px;font-weight:800;">
             Área de Membros & Curso Completo 🎬
