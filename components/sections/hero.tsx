@@ -7,6 +7,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Sliders,
+  ScanFace,
+  Captions,
+  Gauge,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +21,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(255,92,0,0.22),rgba(255,0,76,0.08),transparent)]" />
       <div className="pointer-events-none absolute -left-40 top-20 h-[450px] w-[450px] rounded-full bg-brand/25 blur-[140px]" />
       <div className="pointer-events-none absolute -right-40 bottom-10 h-[450px] w-[450px] rounded-full bg-brand-soft/20 blur-[140px]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_0%,black,transparent)]" />
 
       <div className="relative mx-auto w-full max-w-6xl px-4">
         <div className="grid items-center gap-12 lg:grid-cols-12">
@@ -64,17 +69,45 @@ export function Hero() {
               </Link>
             </div>
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2.5 pt-3 text-xs font-semibold text-text-secondary">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-brand" /> Sem assinatura no cartão
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-brand" /> Roda local ou Google Colab
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-brand" /> Pix com liberação em 5s
-              </span>
+            {/* Social proof + trust */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
+              <div className="flex items-center justify-center lg:justify-start gap-3">
+                <div className="flex -space-x-2.5">
+                  {[
+                    { initial: 'M', className: 'bg-gradient-to-br from-orange-500 to-rose-500' },
+                    { initial: 'L', className: 'bg-gradient-to-br from-amber-500 to-orange-600' },
+                    { initial: 'B', className: 'bg-gradient-to-br from-fuchsia-500 to-orange-500' },
+                  ].map((avatar) => (
+                    <span
+                      key={avatar.initial}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border-2 border-background text-[11px] font-extrabold text-white shadow-lg ${avatar.className}`}
+                    >
+                      {avatar.initial}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-0.5 text-amber-400">
+                    {[...Array(5)].map((_, s) => (
+                      <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-[11px] font-medium text-text-secondary">
+                    Aprovado por criadores e editores
+                  </p>
+                </div>
+              </div>
+
+              <span className="hidden sm:block h-9 w-px bg-border" />
+
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-1.5 text-[11px] font-semibold text-text-secondary">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-brand" /> Sem assinatura no cartão
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-brand" /> Pix em 5s
+                </span>
+              </div>
             </div>
           </div>
 
@@ -82,6 +115,37 @@ export function Hero() {
           <div className="relative lg:col-span-5 flex justify-center">
             {/* Ambient Halo Behind Phone */}
             <div className="absolute inset-0 rounded-full bg-brand/25 blur-3xl transform scale-90" />
+
+            {/* Floating feature chips */}
+            <div className="absolute -left-2 top-14 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15 text-brand">
+                <ScanFace className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold leading-tight text-white">Face Crop 9:16</p>
+                <p className="text-[10px] text-text-secondary">enquadramento automático</p>
+              </div>
+            </div>
+
+            <div className="absolute -right-1 top-1/2 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-500/15 text-fuchsia-400">
+                <Captions className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold leading-tight text-white">Legendas Hormozi</p>
+                <p className="text-[10px] text-text-secondary">palavra por palavra</p>
+              </div>
+            </div>
+
+            <div className="absolute -left-3 bottom-16 z-20 hidden items-center gap-2.5 rounded-2xl border border-white/10 bg-[#111114]/90 px-3.5 py-2.5 shadow-2xl backdrop-blur-xl sm:flex">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-400">
+                <Gauge className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold leading-tight text-white">1080p 60fps</p>
+                <p className="text-[10px] text-text-secondary">render final</p>
+              </div>
+            </div>
 
             {/* Smartphone Frame — Moldura Limpa e Elegante */}
             <div className="relative w-full max-w-[310px] sm:max-w-[330px] rounded-[48px] border-[6px] border-neutral-700/80 bg-neutral-950 p-2.5 sm:p-3 shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_60px_rgba(255,92,0,0.25)] ring-1 ring-white/10 backdrop-blur-xl">

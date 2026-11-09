@@ -24,7 +24,7 @@ const TESTIMONIALS = [
 
 export function Depoimentos() {
   return (
-    <section id="depoimentos" className="border-b border-border py-20 bg-surface/30">
+    <section id="depoimentos" className="border-b border-border bg-surface/30 py-20 md:py-24">
       <div className="mx-auto w-full max-w-6xl px-4">
         <div className="text-center space-y-3 mb-12">
           <Badge variant="brand" className="mb-1">
@@ -36,13 +36,21 @@ export function Depoimentos() {
           <p className="mx-auto max-w-xl text-text-secondary text-sm sm:text-base">
             Veja como criadores e editores de todo o Brasil estão economizando tempo e dinheiro com a Fábrica dos Cortes.
           </p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/[0.06] px-4 py-1.5 text-xs font-semibold text-amber-300">
+            <span className="flex items-center gap-0.5">
+              {[...Array(5)].map((_, s) => (
+                <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              ))}
+            </span>
+            4.9 de 5 • quem usa, recomenda
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
             <div
               key={i}
-              className="relative rounded-3xl border border-border/80 bg-surface/80 p-7 flex flex-col justify-between hover:border-brand/40 transition-all duration-300 shadow-lg"
+              className="relative flex flex-col justify-between rounded-3xl border border-border/80 bg-surface/80 p-7 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_20px_50px_-25px_rgba(255,107,26,0.5)]"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">

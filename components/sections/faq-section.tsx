@@ -36,14 +36,14 @@ export function FAQSection() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="border-b border-border py-20 relative">
+    <section id="faq" className="relative border-b border-border py-20 md:py-24">
       <div className="mx-auto w-full max-w-3xl px-4">
         <div className="text-center space-y-3 mb-10">
           <Badge variant="brand" className="mb-1">
             <HelpCircle className="h-3.5 w-3.5 mr-1" /> Dúvidas Frequentes
           </Badge>
           <h2 className="font-display text-3xl font-extrabold text-text-primary md:text-4xl">
-            Tire todas as suas <span className="text-brand">dúvidas</span>
+            Tire todas as suas <span className="bg-gradient-to-r from-brand via-orange-500 to-amber-400 bg-clip-text text-transparent">dúvidas</span>
           </h2>
           <p className="text-sm sm:text-base text-text-secondary max-w-xl mx-auto">
             Tudo o que você precisa saber sobre o modelo de créditos, entrega instantânea e funcionamento da IA.

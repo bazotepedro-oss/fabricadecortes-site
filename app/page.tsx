@@ -2,6 +2,7 @@ import { getActivePlans } from '@/lib/plans';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Hero } from '@/components/sections/hero';
+import { StatsStrip } from '@/components/sections/stats-strip';
 import { ComoFunciona } from '@/components/sections/como-funciona';
 import { Recursos } from '@/components/sections/recursos';
 import { ComparativoSection } from '@/components/sections/comparativo';
@@ -19,6 +20,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background text-text-primary">
       <Navbar />
       <Hero />
+      <StatsStrip />
       <ComoFunciona />
       <Recursos />
       <ComparativoSection />

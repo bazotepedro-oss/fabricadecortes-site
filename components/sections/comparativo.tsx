@@ -62,7 +62,7 @@ const COMPARISON_ROWS = [
 
 export function ComparativoSection() {
   return (
-    <section className="border-b border-border py-20 relative overflow-hidden bg-surface/40">
+    <section className="relative overflow-hidden border-b border-border bg-surface/40 py-20 md:py-24">
       <div className="relative mx-auto w-full max-w-6xl px-4">
         <div className="text-center space-y-3 mb-14">
           <Badge variant="brand" className="mb-2">
@@ -77,12 +77,12 @@ export function ComparativoSection() {
         </div>
 
         {/* Tabela Comparativa Desktop */}
-        <div className="overflow-x-auto rounded-3xl border border-border/80 bg-surface/90 shadow-2xl backdrop-blur-md">
+        <div className="overflow-x-auto rounded-3xl border border-border/80 bg-surface/90 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9),0_0_80px_-50px_rgba(255,107,26,0.55)] backdrop-blur-md">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-surface-elevated/70 text-xs uppercase tracking-wider text-text-secondary">
                 <th className="py-4 px-6 font-bold">Funcionalidade / Vantagem</th>
-                <th className="py-4 px-6 font-extrabold text-brand bg-brand/10 border-x border-brand/20">
+                <th className="border-x-2 border-brand/30 bg-gradient-to-b from-brand/20 to-brand/5 px-6 py-4 font-extrabold text-brand">
                   <div className="flex items-center gap-1.5">
                     <Zap className="h-4 w-4 text-brand" /> Fábrica dos Cortes (Brasil)
                   </div>
@@ -93,11 +93,11 @@ export function ComparativoSection() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {COMPARISON_ROWS.map((row, idx) => (
-                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                <tr key={idx} className="transition-colors hover:bg-brand/[0.04]">
                   <td className="py-4 px-6 font-medium text-text-primary">
                     {row.feature}
                   </td>
-                  <td className="py-4 px-6 bg-brand/5 border-x border-brand/20 font-bold text-text-primary">
+                  <td className="border-x-2 border-brand/20 bg-brand/[0.07] px-6 py-4 font-bold text-text-primary">
                     <div className="flex items-center gap-2 text-emerald-400">
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-brand" />
                       <span className="text-text-primary">{row.forja}</span>
@@ -122,7 +122,7 @@ export function ComparativoSection() {
         </div>
 
         {/* Banner Inferior */}
-        <div className="mt-8 rounded-2xl border border-brand/30 bg-gradient-to-r from-brand/15 via-surface to-brand/15 p-5 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-3xl border border-brand/30 bg-gradient-to-r from-brand/20 via-surface to-brand/20 p-6 text-center shadow-[0_20px_60px_-30px_rgba(255,107,26,0.5)] sm:flex-row sm:text-left">
           <div className="text-left">
             <span className="text-xs uppercase tracking-wider font-bold text-brand block">Economia Comprovada</span>
             <p className="text-sm font-semibold text-text-primary">

@@ -1,4 +1,5 @@
-import { Coins, Zap, Unlock, Headphones } from 'lucide-react';
+import { Coins, Zap, Unlock, Headphones, Rocket } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const STEPS = [
   { icon: Coins, title: 'Escolha seu Pacote', description: 'De 15 até 250 créditos ou monte uma quantidade avulsa sob medida. Sem assinatura no cartão.' },
@@ -9,29 +10,42 @@ const STEPS = [
 
 export function ComoFunciona() {
   return (
-    <section id="como-funciona" className="border-y border-border bg-surface">
-      <div className="mx-auto w-full max-w-6xl px-4 py-20">
-        <div className="text-center">
-          <h2 className="font-display text-3xl font-bold text-text-primary md:text-4xl">
-            Como funciona em <span className="text-brand">4 passos</span>
+    <section id="como-funciona" className="relative overflow-hidden border-y border-border bg-surface">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(255,107,26,0.08),transparent)]" />
+      <div className="relative mx-auto w-full max-w-6xl px-4 py-20 md:py-24">
+        <div className="space-y-3 text-center">
+          <Badge variant="brand">
+            <Rocket className="mr-1 h-3.5 w-3.5" /> Do Pix ao vídeo em minutos
+          </Badge>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight text-text-primary md:text-4xl">
+            Como funciona em{' '}
+            <span className="bg-gradient-to-r from-brand via-orange-500 to-amber-400 bg-clip-text text-transparent">
+              4 passos
+            </span>
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-text-secondary">
             Do Pix ao primeiro corte viral renderizado, tudo é 100% automático.
           </p>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+
+        <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => {
             const Icon = step.icon;
             return (
-              <div key={i} className="relative rounded-2xl border border-border bg-background p-6">
-                <span className="absolute -top-3 left-6 rounded-full bg-brand-gradient px-2.5 py-0.5 text-xs font-semibold text-white">
-                  {i + 1}
+              <div
+                key={i}
+                className="group relative rounded-3xl border border-border/80 bg-background/80 p-6 pt-7 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_18px_45px_-20px_rgba(255,107,26,0.45)]"
+              >
+                <span className="absolute -top-3 left-6 flex h-7 min-w-7 items-center justify-center rounded-full bg-brand-gradient px-2 text-xs font-extrabold text-white shadow-[0_6px_18px_-6px_rgba(255,107,26,0.9)]">
+                  {String(i + 1).padStart(2, '0')}
                 </span>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/15 text-brand">
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-brand/20 bg-gradient-to-br from-brand/25 to-brand/5 text-brand transition-transform duration-300 group-hover:scale-105">
                   <Icon className="h-6 w-6" />
                 </div>
-                <h3 className="mt-4 font-display text-lg font-semibold text-text-primary">{step.title}</h3>
-                <p className="mt-2 text-sm text-text-secondary">{step.description}</p>
+
+                <h3 className="mt-4 font-display text-lg font-bold text-text-primary">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-text-secondary">{step.description}</p>
               </div>
             );
           })}
