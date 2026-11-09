@@ -94,7 +94,7 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
             <div className="grid gap-2.5 sm:grid-cols-2 pt-2 border-t border-white/[0.08]">
               <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
                 <KeyRound className="h-4 w-4 text-brand shrink-0" />
-                <span><strong>Chave de Licença Oficial</strong> (Railway)</span>
+                <span><strong>Chave de Licença Oficial</strong></span>
               </div>
               <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
                 <Tv className="h-4 w-4 text-emerald-400 shrink-0" />

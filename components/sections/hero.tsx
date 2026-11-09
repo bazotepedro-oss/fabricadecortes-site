@@ -41,7 +41,7 @@ export function Hero() {
             </h1>
 
             <p className="max-w-xl mx-auto lg:mx-0 text-base sm:text-lg text-text-secondary leading-relaxed">
-              Esqueça pagar R$ 150 todo mês em ferramentas gringas. Compre créditos avulsos no Pix, gere cortes verticais 9:16 com enquadramento automático de rosto (Face Crop) e legendas dinâmicas estilo Hormozi.
+              Esqueça pagar R$ 150 todo mês em ferramentas gringas. Compre créditos avulsos no Pix, gere cortes verticais com legendas automáticas e enquadramento inteligente — prontos para postar.
             </p>
 
             {/* CTAs — Botões Grandes, Marcantes e Imponentes */}
@@ -122,8 +122,8 @@ export function Hero() {
                 <ScanFace className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[11px] font-bold leading-tight text-white">Face Crop 9:16</p>
-                <p className="text-[10px] text-text-secondary">enquadramento automático</p>
+                <p className="text-[11px] font-bold leading-tight text-white">Enquadramento automático</p>
+                <p className="text-[10px] text-text-secondary">o rosto sempre no centro</p>
               </div>
             </div>
 
@@ -132,7 +132,7 @@ export function Hero() {
                 <Captions className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[11px] font-bold leading-tight text-white">Legendas Hormozi</p>
+                <p className="text-[11px] font-bold leading-tight text-white">Legendas automáticas</p>
                 <p className="text-[10px] text-text-secondary">palavra por palavra</p>
               </div>
             </div>
@@ -142,8 +142,8 @@ export function Hero() {
                 <Gauge className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-[11px] font-bold leading-tight text-white">1080p 60fps</p>
-                <p className="text-[10px] text-text-secondary">render final</p>
+                <p className="text-[11px] font-bold leading-tight text-white">Vídeo pronto</p>
+                <p className="text-[10px] text-text-secondary">é só postar</p>
               </div>
             </div>
 

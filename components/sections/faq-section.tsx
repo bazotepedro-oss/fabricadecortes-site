@@ -8,7 +8,7 @@ import { HelpCircle } from 'lucide-react';
 const FAQ = [
   {
     q: 'Como funciona o sistema de créditos? Tem alguma mensalidade?',
-    a: 'NÃO cobramos nenhuma mensalidade e não prendemos seu cartão de crédito! Você compra apenas os créditos que desejar via Pix (1 crédito = 1 corte viral completo com legenda dinâmica e face crop). Seus créditos ficam salvos na sua chave e nunca são apagados no fim do mês.',
+    a: 'NÃO cobramos nenhuma mensalidade e não prendemos seu cartão de crédito! Você compra apenas os créditos que desejar via Pix (1 crédito = 1 corte viral completo com legendas automáticas e enquadramento inteligente). Seus créditos ficam salvos na sua chave e nunca são apagados no fim do mês.',
   },
   {
     q: 'Quanto tempo duram os créditos após a compra?',
@@ -16,19 +16,19 @@ const FAQ = [
   },
   {
     q: 'Preciso ter um computador potente com placa de vídeo?',
-    a: 'Não é obrigatório! A Fábrica dos Cortes funciona de duas formas: (1) Se você tiver PC com placa NVIDIA, roda com aceleração máxima de GPU localmente. (2) Se tiver um PC fraco ou notebook comum, você roda diretamente na nuvem pelo Google Colab gratuito, sem gastar nem esquentar seu computador.',
+    a: 'Não é obrigatório! A Fábrica dos Cortes funciona no seu computador ou direto na nuvem. Se seu PC for mais simples, você usa a versão na nuvem e não precisa se preocupar com configuração ou com o desempenho da máquina.',
   },
   {
     q: 'Como recebo minha chave de licença após o pagamento?',
-    a: 'Assim que o Pix for aprovado pela AbacatePay (geralmente em menos de 5 segundos), você é redirecionado para a tela de acesso com sua chave FC-XXXXX gerada na hora, além de receber uma cópia no seu e-mail cadastrado.',
+    a: 'Assim que o Pix for aprovado (geralmente em menos de 5 segundos), você é redirecionado para a tela de acesso com sua chave FC-XXXXX gerada na hora, além de receber uma cópia no seu e-mail cadastrado.',
   },
   {
     q: 'Como funciona a recarga de créditos se os meus acabarem?',
-    a: 'Basta acessar a página de Recarga (/recarga), informar sua chave FC-... ou e-mail, escolher quantos créditos quer adicionar e pagar o Pix. O servidor da Railway injeta os novos créditos na sua licença automaticamente em segundos.',
+    a: 'Basta acessar a página de Recarga (/recarga), informar sua chave FC-... ou e-mail, escolher quantos créditos quer adicionar e pagar o Pix. Os novos créditos entram automaticamente na sua licença em segundos.',
   },
   {
     q: 'Posso exportar o projeto para o Premiere Pro ou DaVinci Resolve?',
-    a: 'Sim! Além de renderizar o vídeo final em MP4 1080p pronto para postar no TikTok/Reels, a Fábrica dos Cortes gera arquivos XML de timeline aberta para você ajustar cores, trilha ou efeitos no Adobe Premiere ou DaVinci.',
+    a: 'Sim! Você recebe o vídeo pronto para postar no TikTok, Reels ou Shorts e também pode abrir o projeto no Adobe Premiere ou DaVinci para ajustar cores, trilha ou efeitos.',
   },
 ];
 

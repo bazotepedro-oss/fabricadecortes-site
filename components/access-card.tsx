@@ -230,7 +230,7 @@ export function AccessCard() {
                     Google Colab
                   </div>
                   <p className="text-xs text-text-secondary">
-                    Prefere rodar na nuvem? Execute nas GPUs gratuitas sem usar seu computador.
+                    Prefere rodar na nuvem? Execute sem usar a potência do seu computador.
                   </p>
                 </div>
                 <div className="pt-4">

@@ -25,7 +25,7 @@ export default function ContatoPage() {
             Contato e <span className="text-brand">Suporte Oficial</span>
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-text-secondary text-sm sm:text-base">
-            Dúvidas sobre sua licença, ativação no Google Colab ou sugestões? Fale diretamente com o nosso time.
+            Dúvidas sobre sua licença, ativação ou sugestões? Fale diretamente com o nosso time.
           </p>
         </div>
 

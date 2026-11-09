@@ -3,10 +3,10 @@ import { Badge } from '@/components/ui/badge';
 
 const FEATURES = [
   { icon: Sparkles, title: 'Cortes automáticos com IA', description: 'A IA identifica os momentos mais engajantes e gera cortes prontos.' },
-  { icon: Subtitles, title: 'Legendas dinâmicas', description: 'Estilo Hormozi com highlight palavra por palavra e emojis.' },
-  { icon: Video, title: 'Otimizado para Reels/TikTok/Shorts', description: 'Formatos 9:16, auto-crop e legendas otimizados para cada plataforma.' },
-  { icon: Zap, title: 'Processamento rápido', description: 'Transcrição com slicing: processa 1x, corta N vezes.' },
-  { icon: Shield, title: 'Acesso seguro', description: 'Credenciais geradas com hash e token one-time com expiração.' },
+  { icon: Subtitles, title: 'Legendas automáticas', description: 'Legendas prontas, com destaque nas palavras e emojis.' },
+  { icon: Video, title: 'Otimizado para Reels/TikTok/Shorts', description: 'Formato vertical perfeito para cada plataforma.' },
+  { icon: Zap, title: 'Processamento rápido', description: 'Seus vídeos ficam prontos em minutos, sem travar seu computador.' },
+  { icon: Shield, title: 'Acesso seguro', description: 'Seu acesso é liberado na hora, com total segurança.' },
   { icon: Headphones, title: 'Suporte', description: 'Equipe disponível para ajudar com configuração e uso.' },
   { icon: Globe, title: 'Sem complicação técnica', description: 'Instale, acesse e corte. Interface moderna e direta.' },
   { icon: FileVideo, title: 'Tradução automática', description: 'Traduza legendas para 10+ línguas automaticamente.' },

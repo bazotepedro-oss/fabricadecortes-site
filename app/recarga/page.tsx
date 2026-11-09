@@ -132,8 +132,8 @@ function RecargaForm() {
       try {
         data = await res.json();
       } catch (parseErr) {
-        console.error('Resposta não-JSON do servidor:', parseErr);
-        setError('Erro no servidor ao processar recarga. Tente novamente.');
+        console.error('Resposta não-JSON:', parseErr);
+        setError('Erro ao processar a recarga. Tente novamente.');
         return;
       }
 
@@ -148,7 +148,7 @@ function RecargaForm() {
       }
     } catch (err: any) {
       console.error('Erro de rede na recarga:', err);
-      setError('Falha de conexão com o servidor ao gerar recarga.');
+      setError('Falha de conexão ao gerar a recarga.');
     } finally {
       setLoading(false);
     }
@@ -166,7 +166,7 @@ function RecargaForm() {
                 1. Quantos créditos você quer recarregar?
               </CardTitle>
               <CardDescription>
-                Cada crédito equivale a 1 corte de vídeo viral completo com legendas e renderização.
+                Cada crédito equivale a 1 corte de vídeo viral completo com legendas automáticas.
               </CardDescription>
             </div>
             <Badge variant="outline" className="border-brand/40 bg-brand/10 text-brand font-semibold px-3 py-1">
@@ -345,7 +345,7 @@ function RecargaForm() {
               className="mt-1 font-mono font-medium text-base h-11 border-border/80 bg-background/50 focus:ring-brand"
             />
             <p className="text-[12px] text-text-secondary mt-1.5">
-              O sistema verifica no servidor da Railway e credita instantaneamente após a confirmação do Pix.
+              O sistema verifica sua licença e credita os novos créditos automaticamente após a confirmação do Pix.
             </p>
           </div>
 
@@ -452,7 +452,7 @@ export default function RecargaPage() {
             Recarregue seus créditos na <span className="bg-gradient-to-r from-brand via-orange-500 to-amber-400 bg-clip-text text-transparent">Fábrica dos Cortes</span>
           </h1>
           <p className="text-text-secondary max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-            Desconto progressivo automático no atacado: quanto mais créditos você adicionar, mais barato fica cada corte renderizado com IA.
+            Desconto progressivo automático no atacado: quanto mais créditos você adicionar, mais barato fica cada corte com IA.
           </p>
         </div>
 

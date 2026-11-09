@@ -3,8 +3,8 @@ import { BadgeCheck, Clock3, MonitorPlay, Zap } from 'lucide-react';
 const STATS = [
   { icon: Zap, value: '5 segundos', label: 'Liberação da licença via Pix' },
   { icon: BadgeCheck, value: '365 dias', label: 'Seus créditos nunca expiram no mês' },
-  { icon: MonitorPlay, value: '9:16 • 1080p', label: 'Pronto para Reels, TikTok e Shorts' },
-  { icon: Clock3, value: '1 crédito', label: '1 vídeo completo renderizado com IA' },
+  { icon: MonitorPlay, value: 'Formato vertical', label: 'Pronto para Reels, TikTok e Shorts' },
+  { icon: Clock3, value: '1 crédito', label: '1 vídeo completo com IA' },
 ];
 
 export function StatsStrip() {

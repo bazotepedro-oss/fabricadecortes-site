@@ -78,8 +78,8 @@ const CORE_PLANS = [
     tag: null,
     features: [
       '15 cortes virais com IA (1 crédito = 1 vídeo)',
-      'Legendas dinâmicas estilo Hormozi / TikTok',
-      'Enquadramento de rosto Face Crop (9:16)',
+      'Legendas automáticas para TikTok e Reels',
+      'Enquadramento automático no formato vertical',
       'Válido por 365 dias (Sem mensalidade)',
       'Entrega imediata via Pix',
     ],
@@ -95,9 +95,9 @@ const CORE_PLANS = [
     features: [
       '50 cortes virais com IA (39% de Desconto)',
       'Ideal para quem posta todo dia no Reels/TikTok',
-      'Renderização prioritária com GPU acelerada',
+      'Processamento prioritário',
       'Suporte direto no WhatsApp em Português',
-      'Exportação 1080p 60fps sem marca d’água',
+      'Vídeos em alta qualidade e sem marca d’água',
     ],
   },
   {
@@ -111,8 +111,8 @@ const CORE_PLANS = [
     features: [
       '120 cortes virais com IA (49% de Desconto)',
       'Máxima economia para canais dark e agências',
-      'Exportação XML aberta para Premiere e DaVinci',
-      'Acesso antecipado a novos modelos de IA',
+      'Projeto editável no Premiere e DaVinci',
+      'Acesso antecipado a novidades',
       'Créditos cumulativos por 1 ano inteiro',
     ],
   },
@@ -134,7 +134,7 @@ export function PlanosSection({ plans }: Props) {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-brand/50 bg-brand/10 px-4 py-1.5 text-xs font-extrabold text-brand shadow-[0_0_20px_rgba(255,92,0,0.25)]">
             <Coins className="w-4 h-4 text-brand" />
-            <span>1 Crédito = 1 Vídeo Cortado e Renderizado com IA</span>
+            <span>1 Crédito = 1 Vídeo Pronto com IA</span>
           </div>
 
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-black text-text-primary tracking-tight">

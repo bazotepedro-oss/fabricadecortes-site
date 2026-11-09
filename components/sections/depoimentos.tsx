@@ -11,13 +11,13 @@ const TESTIMONIALS = [
   {
     name: 'Lucas Vasconcelos',
     role: 'Editor de Vídeos Freelancer',
-    text: 'O Face Crop e a legenda estilo Hormozi palavra por palavra são perfeitos. Só de não ter que abrir o Premiere pra sincronizar legenda na mão já me economizou 3 horas por dia de trabalho.',
+    text: 'As legendas automáticas e o enquadramento são perfeitos. Só de não precisar sincronizar legenda na mão já me economizou 3 horas por dia de trabalho.',
     highlight: 'Retenção subiu 35%',
   },
   {
     name: 'Beatriz Castro',
     role: 'Criadora no TikTok & Reels',
-    text: 'Rodo direto pelo Google Colab na nuvem porque meu notebook é fraco e não tem placa de vídeo. Não trava nada e os vídeos saem prontos em 1080p com áudio limpo. Bati 100k seguidores.',
+    text: 'Rodo direto na nuvem porque meu notebook é fraco e não tem placa de vídeo. Não trava nada e os vídeos saem prontos com áudio limpo. Bati 100k seguidores.',
     highlight: '100k seguidores em 60 dias',
   },
 ];
