@@ -3,7 +3,7 @@ import { verifyAdminRequest } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { syncEditStudent } from '@/lib/members-sync';
-import { listLicensesFromServer, createLicenseOnServer } from '@/lib/license-server';
+import { listLicensesFromServer, createLicenseOnServer, addCreditsOnServer } from '@/lib/license-server';
 
 export async function POST(req: Request) {
   const auth = await verifyAdminRequest(undefined, req);
@@ -117,20 +117,39 @@ export async function POST(req: Request) {
       }).catch(() => null);
     }
 
-    // 4. Se uma chave de licença foi inserida ou alterada, verifica se existe no Railway
+    // 4. Se uma chave de licença foi inserida ou alterada, garante a licença no Railway
+    //    preservando os créditos e a validade reais do cliente (nunca um valor fixo).
     if (licenseKey) {
       try {
+        const credential = customer.credentials?.[0];
+        const localCredits = Number(credential?.credits || 0);
+        const creditsToUse = localCredits > 0 ? localCredits : 100;
+        const expiry = credential?.expiresAt ? new Date(credential.expiresAt).getTime() : 0;
+        const daysToUse = expiry ? Math.max(1, Math.ceil((expiry - Date.now()) / 86400000)) : 365;
+        const latestOrder = await prisma.order
+          .findFirst({ where: { customerId: customer.id }, include: { plan: true }, orderBy: { createdAt: 'desc' } })
+          .catch(() => null);
+        const planToUse = latestOrder?.plan?.slug || 'custom';
+
         const allRailway = await listLicensesFromServer().catch(() => []);
-        const exists = allRailway.some((l) => l.license_key.toUpperCase() === licenseKey);
-        if (!exists) {
+        const existing = allRailway.find((l) => l.license_key.toUpperCase() === licenseKey);
+        if (!existing) {
           const created = await createLicenseOnServer({
             licenseKey,
-            credits: 100,
-            days: 365,
-            plan: 'pack_criador',
+            credits: creditsToUse,
+            days: daysToUse,
+            plan: planToUse,
             operationId: `customer-edit-create:${licenseKey}`,
           });
           if (!created.ok) throw new Error(created.message || 'Falha ao criar licença no Railway');
+        } else if (Number(existing.credits) < creditsToUse) {
+          const diff = creditsToUse - Number(existing.credits);
+          const added = await addCreditsOnServer(
+            licenseKey,
+            diff,
+            `customer-edit-sync:${licenseKey}:${creditsToUse}`,
+          );
+          if (!added.ok) throw new Error(added.message || 'Falha ao sincronizar créditos no Railway');
         }
       } catch (railErr) {
         console.warn('[Admin Edit] Falha ao verificar/criar chave no Railway:', railErr);

@@ -21,13 +21,13 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Sempre atualizado em tempo real
 
 interface PageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default async function PartnerPortalPage({ params }: PageProps) {
-  const { token } = params;
+  const { token } = await params;
 
   let affiliate = await prisma.affiliate.findUnique({
     where: { token },

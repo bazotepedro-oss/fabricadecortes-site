@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from './db';
 import { generateToken, hashToken } from './utils';
-import { generateLicenseKey, createLicenseOnServer, listLicensesFromServer } from './license-server';
+import { generateLicenseKey, createLicenseOnServer, listLicensesFromServer, findLicenseOnServer, toggleLicenseOnServer } from './license-server';
 import { sendAccessEmail } from './email';
 import { syncAddStudent, syncSetStudentPassword, syncToggleStudent } from './members-sync';
 
@@ -301,6 +301,18 @@ export async function revokeCredential(credentialId: string, reason = 'manual'):
     where: { id: credentialId },
     data: { status: 'revoked', updatedAt: new Date() },
   });
+
+  // Bloqueia também a licença no servidor (o app não deve continuar ativo).
+  if (cred?.licenseKey) {
+    try {
+      const found = await findLicenseOnServer(cred.licenseKey);
+      if (found.license && String(found.license.status || '').toLowerCase() === 'active') {
+        await toggleLicenseOnServer(cred.licenseKey);
+      }
+    } catch (err) {
+      console.warn('[Revoke] Falha ao bloquear licença no Railway:', err);
+    }
+  }
 
   if (cred?.customer?.email) {
     await syncToggleStudent(cred.customer.email, 'bloqueado');
