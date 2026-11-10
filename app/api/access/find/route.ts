@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { colabUrl, driveUrl, whatsappUrl } from '@/lib/provisioning';
-import { listLicensesFromServer, createLicenseOnServer } from '@/lib/license-server';
+import { rateLimit } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,23 +12,34 @@ export async function GET(req: Request) {
     const email = (searchParams.get('email') || '').trim().toLowerCase();
     const orderId = (searchParams.get('orderId') || '').trim();
 
-    if (!email && !orderId) {
-      return NextResponse.json({ error: 'Informe seu e-mail ou o ID do pedido.' }, { status: 400 });
+    // O ID do pedido é obrigatório. Sem ele, qualquer pessoa que soubesse um e-mail
+    // conseguiria consultar a chave de licença de outra pessoa.
+    if (!orderId) {
+      return NextResponse.json({ error: 'Informe o ID do pedido para consultar o acesso.' }, { status: 400 });
+    }
+
+    const ip =
+      req.headers.get('x-real-ip') ||
+      req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ||
+      'unknown';
+    const rl = await rateLimit(`access:${ip}`);
+    if (rl.unavailable) {
+      return NextResponse.json({ error: 'Consulta temporariamente indisponível.' }, { status: 503 });
+    }
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Muitas tentativas. Aguarde um instante.' }, { status: 429 });
     }
 
     // 1. Tenta buscar no banco de dados Prisma local (caso disponível)
     try {
-      const whereConditions: any = { status: 'active' };
+      const whereConditions: any = { status: 'active', orderId };
 
       if (email) {
         const customer = await prisma.customer.findUnique({ where: { email } });
-        if (customer) {
-          whereConditions.customerId = customer.id;
+        if (!customer) {
+          return NextResponse.json({ ok: false, error: 'Pedido não encontrado para este e-mail.' }, { status: 404 });
         }
-      }
-
-      if (orderId) {
-        whereConditions.orderId = orderId;
+        whereConditions.customerId = customer.id;
       }
 
       const cred = await prisma.accessCredentials.findFirst({
@@ -77,9 +88,10 @@ export async function GET(req: Request) {
           const meta = c.metadata || {};
           const cEmail = (meta.email || c.customer?.email || '').trim().toLowerCase();
           const cOrderId = (meta.orderId || c.id || '').trim();
-          if (orderId && (cOrderId === orderId || c.id === orderId)) return true;
-          if (email && cEmail === email) return true;
-          return false;
+          const matchesOrder = cOrderId === orderId || c.id === orderId;
+          if (!matchesOrder) return false;
+          if (email && cEmail && cEmail !== email) return false;
+          return true;
         });
       }
     } catch (err) {
@@ -107,8 +119,7 @@ export async function GET(req: Request) {
       const freshCred = await prisma.accessCredentials.findFirst({
         where: {
           OR: [
-            ...(email ? [{ customer: { email } }] : []),
-            ...(orderId ? [{ orderId }] : []),
+            { orderId },
             ...(matchingCheckout.id ? [{ order: { abacateCheckoutId: matchingCheckout.id } }] : []),
           ],
         },
@@ -120,6 +131,9 @@ export async function GET(req: Request) {
       });
 
       if (freshCred) {
+        if (email && freshCred.customer?.email?.toLowerCase() !== email) {
+          return NextResponse.json({ ok: false, error: 'Pedido não encontrado para este e-mail.' }, { status: 404 });
+        }
         return NextResponse.json({
           ok: true,
           username: freshCred.username,

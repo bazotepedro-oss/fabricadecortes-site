@@ -137,6 +137,7 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
         </div>
       </div>
 
+      ${input.includeCourse ? `
       <!-- Card Especial de Acesso à Área de Membros VIP (Estilo Netflix) -->
       <div style="background:linear-gradient(180deg, #181920 0%, #0F1014 100%);border:2px solid #FF5C00;border-radius:16px;padding:22px 20px;margin:22px 0;box-shadow:0 8px 30px rgba(255,92,0,0.25);text-align:left;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -162,6 +163,7 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
           ▶ Acessar Área de Membros (Assistir Aulas)
         </a>
       </div>
+      ` : ''}
 
       <!-- Passo a Passo de Instalação e Aulas -->
       <div style="background:#1A1A1A;border:1px solid #2B2B2B;border-radius:12px;padding:18px;margin:22px 0;font-size:13px;line-height:1.65;">
@@ -171,12 +173,12 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
         
         <div style="margin-bottom:12px;">
           <strong style="color:#FF7A1A;">1. Google Drive Oficial:</strong><br>
-          Acesse a pasta do Drive para baixar o instalador e assistir às aulas ensinando o passo a passo completo de como instalar no seu PC e começar a cortar.
+          Acesse a pasta do Drive para baixar o instalador ${input.includeCourse ? 'e assistir às aulas ensinando' : 'e acessar o guia de instalação com'} o passo a passo completo de como instalar no seu PC e começar a cortar.
         </div>
 
         <div style="margin-bottom:12px;">
-          <strong style="color:#25D366;">2. Grupo VIP no WhatsApp:</strong><br>
-          Entre na nossa comunidade exclusiva para tirar dúvidas, receber dicas de monetização e atualizações em primeira mão.
+          <strong style="color:#25D366;">2. ${input.includeCourse ? 'Grupo VIP de alunos' : 'Grupo de suporte'} no WhatsApp:</strong><br>
+          ${input.includeCourse ? 'Entre na nossa comunidade exclusiva para tirar dúvidas, receber dicas de monetização e atualizações em primeira mão.' : 'Entre no grupo de suporte para tirar dúvidas de instalação, ativação, licença e uso do aplicativo.'}
         </div>
 
         <div>
@@ -189,12 +191,12 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
       <div style="text-align:center;margin:28px 0 20px;">
         <!-- Botão Google Drive -->
         <a href="${driveLink}" target="_blank" style="display:block;background:linear-gradient(135deg, #FF5C00, #E04800);color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 16px rgba(255,92,0,0.35);">
-          📁 Acessar Google Drive (Aulas e Instalador)
+          📁 Acessar Google Drive (${input.includeCourse ? 'Aulas e Instalador' : 'Instalador e Guia'})
         </a>
 
         <!-- Botão WhatsApp -->
         <a href="${whatsappLink}" target="_blank" style="display:block;background:#25D366;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 16px rgba(37,211,102,0.3);">
-          💬 Entrar no Grupo VIP do WhatsApp
+          💬 ${input.includeCourse ? 'Entrar no Grupo VIP do WhatsApp' : 'Entrar no Grupo de Suporte'}
         </a>
 
         <!-- Botão Google Colab (opcional nuvem) -->
@@ -209,8 +211,8 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
           <strong>Painel de Acesso Web:</strong> Caso precise consultar seu saldo de créditos ou ver sua chave novamente, acesse a qualquer momento:
           <br><a href="${accessPage}" style="color:#FF7A1A;text-decoration:none;">${accessPage}</a>
         </p>
-        ${input.username ? `<p style="margin:0 0 4px;"><strong>Usuário:</strong> ${input.username}</p>` : ''}
-        ${input.temporaryPassword ? `<p style="margin:0 0 4px;"><strong>Senha provisória:</strong> <code style="color:#FFB27A;">${input.temporaryPassword}</code></p>` : ''}
+        ${input.includeCourse && input.username ? `<p style="margin:0 0 4px;"><strong>Usuário:</strong> ${input.username}</p>` : ''}
+        ${input.includeCourse && input.temporaryPassword ? `<p style="margin:0 0 4px;"><strong>Senha provisória:</strong> <code style="color:#FFB27A;">${input.temporaryPassword}</code></p>` : ''}
       </div>
 
     </div>

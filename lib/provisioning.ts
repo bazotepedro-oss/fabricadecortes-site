@@ -149,8 +149,12 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
     const retryPassword = generatePassword();
     const retryHash = await bcrypt.hash(retryPassword, SALT_ROUNDS);
     const retryCustomer = await prisma.customer.findUnique({ where: { id: existing.customerId } });
-    const syncOk = await syncSetStudentPassword(input.email, retryPassword);
-    if (!syncOk) throw new Error('Não foi possível sincronizar a senha com a Área de Membros');
+
+    // A Área de Membros/curso só é liberada quando o order bump foi contratado.
+    if (input.includeCourse) {
+      const syncOk = await syncSetStudentPassword(input.email, retryPassword);
+      if (!syncOk) throw new Error('Não foi possível sincronizar a senha com a Área de Membros');
+    }
     await prisma.accessCredentials.update({
       where: { id: existing.id },
       data: { passwordHash: retryHash, updatedAt: new Date() },
@@ -234,14 +238,16 @@ export async function provision(input: ProvisionInput): Promise<ProvisionResult>
     },
   });
 
-  // 4. Cadastra automaticamente o aluno na Área de Membros (HostGator / Local)
-  const customer = await prisma.customer.findUnique({ where: { id: input.customerId } });
-  const memberSynced = await syncAddStudent({
-    name: customer?.name || username,
-    email: input.email,
-    password: temporaryPassword,
-  });
-  if (!memberSynced) throw new Error('Não foi possível sincronizar o aluno com a Área de Membros');
+  // 4. Cadastra automaticamente o aluno na Área de Membros apenas quando o curso foi adquirido.
+  if (input.includeCourse) {
+    const customer = await prisma.customer.findUnique({ where: { id: input.customerId } });
+    const memberSynced = await syncAddStudent({
+      name: customer?.name || username,
+      email: input.email,
+      password: temporaryPassword,
+    });
+    if (!memberSynced) throw new Error('Não foi possível sincronizar o aluno com a Área de Membros');
+  }
 
   // 5. Envia e-mail automático com Chave de Licença, créditos e Acesso à Área de Membros
   if (!input.skipEmail) {

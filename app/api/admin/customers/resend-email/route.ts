@@ -64,6 +64,10 @@ export async function POST(req: Request) {
     const password: string | undefined = undefined;
     const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.fabricadecortes.com').replace(/\/$/, '');
     const accessUrl = cred?.accessUrl || `${base}/retorno`;
+    const includeCourse = (customer.orders || []).some((item: any) => {
+      const meta = (item.metadata || {}) as Record<string, unknown>;
+      return meta.includeCourse === true || meta.includeCourse === 'true';
+    });
 
     const emailRes = await sendAccessEmail({
       to: customer.email,
@@ -79,7 +83,7 @@ export async function POST(req: Request) {
       username: cred?.username || customer.email.split('@')[0],
       temporaryPassword: password,
       planName,
-      includeCourse: true,
+      includeCourse,
     });
 
     if (!emailRes.ok) {

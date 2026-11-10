@@ -13,9 +13,12 @@ import {
   Inbox,
   Tv,
   HelpCircle,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { syncAbacatePay } from '@/lib/sync-abacatepay';
+import { prisma } from '@/lib/db';
+import { driveUrl } from '@/lib/provisioning';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -29,10 +32,59 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
   await syncAbacatePay().catch((e) => console.error('[Retorno] Erro ao sincronizar AbacatePay:', e));
 
   const customerEmail = searchParams?.email;
-  const whatsappVipUrl =
+  const orderId = searchParams?.orderId;
+
+  // O curso/Área de Membros só aparece para quem contratou o order bump.
+  let includeCourse = false;
+  try {
+    const order = orderId
+      ? await prisma.order.findFirst({
+          where: {
+            OR: [
+              { id: orderId },
+              { abacateCheckoutId: orderId },
+              { abacateOrderId: orderId },
+            ],
+          },
+          select: { customerId: true, metadata: true },
+        })
+      : customerEmail
+        ? await prisma.order.findFirst({
+            where: { customer: { email: customerEmail } },
+            orderBy: { createdAt: 'desc' },
+            select: { customerId: true, metadata: true },
+          })
+        : null;
+
+    if (order) {
+      const ownMeta = (order.metadata || {}) as Record<string, unknown>;
+      includeCourse = ownMeta.includeCourse === true || ownMeta.includeCourse === 'true';
+
+      // Se o pedido atual for uma recarga, mas o cliente já tiver comprado o curso antes,
+      // continua mostrando o acesso ao curso.
+      if (!includeCourse && order.customerId) {
+        const previousOrders = await prisma.order.findMany({
+          where: { customerId: order.customerId },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          select: { metadata: true },
+        });
+
+        includeCourse = previousOrders.some((item) => {
+          const meta = (item.metadata || {}) as Record<string, unknown>;
+          return meta.includeCourse === true || meta.includeCourse === 'true';
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[Retorno] Não foi possível verificar o curso:', error);
+  }
+
+  const whatsappUrl =
     process.env.WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC';
   const membersUrl =
     process.env.NEXT_PUBLIC_MEMBERS_URL || 'https://membros.fabricadecortes.com';
+  const appDownloadUrl = driveUrl();
 
   return (
     <div className="min-h-screen bg-[#070709] text-text-primary flex flex-col justify-between selection:bg-brand selection:text-white">
@@ -97,18 +149,32 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
                 <span><strong>Chave de Licença Oficial</strong></span>
               </div>
               <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
-                <Tv className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span><strong>Login e Senha</strong> da Área VIP</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
                 <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
                 <span><strong>Saldo de Créditos</strong> já ativado</span>
               </div>
+              {includeCourse ? (
+                <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
+                  <Tv className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span><strong>Login e Senha</strong> da Área VIP</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
+                  <Download className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span><strong>Instalador</strong> e guia de instalação</span>
+                </div>
+              )}
               <div className="flex items-center gap-2.5 text-xs sm:text-sm text-neutral-200 bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
                 <ShieldCheck className="h-4 w-4 text-brand shrink-0" />
                 <span><strong>Notebook Google Colab</strong> configurado</span>
               </div>
             </div>
+
+            {!includeCourse && (
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3.5 text-xs text-neutral-300 leading-relaxed">
+                Esta compra inclui o aplicativo e os créditos. O curso/Área de Membros é opcional e não foi incluído.
+                Se quiser adicionar depois, fale com o suporte.
+              </div>
+            )}
 
             {/* Caixa de Atenção: Spam/Promoções */}
             <div className="rounded-xl bg-orange-500/10 border border-orange-500/25 p-3.5 flex items-start gap-3 text-xs sm:text-sm text-orange-200/90 leading-relaxed">
@@ -121,16 +187,29 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
 
           {/* ── BOTÕES DE AÇÃO PRINCIPAIS ── */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-xl mx-auto">
-            <Button
-              asChild
-              size="lg"
-              className="w-full sm:w-auto h-12 px-6 rounded-xl font-black text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_30px_rgba(255,92,0,0.4)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-            >
-              <Link href={membersUrl} target="_blank">
-                <PlayCircle className="h-5 w-5 mr-2" />
-                Entrar na Área de Membros VIP
-              </Link>
-            </Button>
+            {includeCourse ? (
+              <Button
+                asChild
+                size="lg"
+                className="w-full sm:w-auto h-12 px-6 rounded-xl font-black text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_30px_rgba(255,92,0,0.4)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              >
+                <Link href={membersUrl} target="_blank">
+                  <PlayCircle className="h-5 w-5 mr-2" />
+                  Entrar na Área de Membros VIP
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                className="w-full sm:w-auto h-12 px-6 rounded-xl font-black text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_30px_rgba(255,92,0,0.4)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              >
+                <Link href={appDownloadUrl} target="_blank">
+                  <Download className="h-5 w-5 mr-2" />
+                  Baixar aplicativo e guia
+                </Link>
+              </Button>
+            )}
 
             <Button
               asChild
@@ -138,9 +217,9 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
               variant="outline"
               className="w-full sm:w-auto h-12 px-6 rounded-xl font-bold text-sm text-emerald-400 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 hover:text-emerald-300 transition-all duration-300"
             >
-              <Link href={whatsappVipUrl} target="_blank">
+              <Link href={whatsappUrl} target="_blank">
                 <MessageCircle className="h-5 w-5 mr-2 text-emerald-400" />
-                Grupo VIP no WhatsApp
+                {includeCourse ? 'Grupo VIP no WhatsApp' : 'Suporte no WhatsApp'}
               </Link>
             </Button>
 
@@ -166,15 +245,19 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
                 <div className="text-xs font-black text-brand uppercase tracking-wider">Passo 1</div>
                 <div className="text-sm font-bold text-white">Abra seu E-mail</div>
                 <p className="text-xs text-neutral-400 leading-relaxed">
-                  Procure pela mensagem com o título &quot;Seu acesso à Fábrica dos Cortes está pronto&quot; com sua chave e senha.
+                  Procure pela mensagem com o título &quot;Seu acesso à Fábrica dos Cortes está pronto&quot; com sua chave e instruções.
                 </p>
               </div>
 
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-2">
                 <div className="text-xs font-black text-emerald-400 uppercase tracking-wider">Passo 2</div>
-                <div className="text-sm font-bold text-white">Acesse as Aulas</div>
+                <div className="text-sm font-bold text-white">
+                  {includeCourse ? 'Acesse as Aulas' : 'Baixe e Instale o App'}
+                </div>
                 <p className="text-xs text-neutral-400 leading-relaxed">
-                  Faça login na Área de Membros para assistir os tutoriais passo a passo e baixar os arquivos.
+                  {includeCourse
+                    ? 'Faça login na Área de Membros para assistir os tutoriais passo a passo e baixar os arquivos.'
+                    : 'Baixe o instalador no Google Drive, extraia o ZIP e execute o INSTALADOR.bat. O guia completo está na pasta.'}
                 </p>
               </div>
 
@@ -194,7 +277,7 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
             <span>
               Dúvidas ou precisa de ajuda? Fale com nosso{' '}
               <a
-                href={whatsappVipUrl}
+                href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline font-semibold"

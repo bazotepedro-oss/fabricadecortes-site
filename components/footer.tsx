@@ -13,6 +13,7 @@ const LINKS = [
 
 const LEGAL = [
   { label: 'Termos de uso', href: '/termos' },
+  { label: 'Reembolso', href: '/termos#reembolso' },
   { label: 'Privacidade', href: '/privacidade' },
   { label: 'Contato', href: '/contato' },
   { label: 'Suporte', href: '/suporte' },

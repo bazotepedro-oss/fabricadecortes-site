@@ -124,6 +124,28 @@ export function PlanosSection({ plans }: Props) {
   const [customCredits, setCustomCredits] = useState<number>(250);
   const customPricing = useMemo(() => calculateCustomPricing(customCredits), [customCredits]);
 
+  // Usa os preços e recursos do banco para os 3 pacotes em destaque.
+  // Se o banco mudar, a home acompanha automaticamente.
+  const dbBySlug = useMemo(() => new Map(plans.map((plan) => [plan.slug, plan])), [plans]);
+  const displayPlans = useMemo(
+    () =>
+      CORE_PLANS.map((core) => {
+        const db = dbBySlug.get(core.slug);
+        if (!db) return core;
+
+        const features = Array.isArray(db.features)
+          ? (db.features as unknown[]).filter((item): item is string => typeof item === 'string')
+          : core.features;
+
+        return {
+          ...core,
+          price: db.price,
+          features: features.length > 0 ? features : core.features,
+        };
+      }),
+    [dbBySlug],
+  );
+
   return (
     <section id="planos" className="border-b border-border py-20 md:py-28 relative overflow-hidden">
       {/* Background radial highlight */}
@@ -148,7 +170,7 @@ export function PlanosSection({ plans }: Props) {
 
         {/* Grid dos 3 Cards Principais — Visual Imponente e Botões Grandes */}
         <div className="mt-14 grid gap-7 md:grid-cols-3 items-stretch">
-          {CORE_PLANS.map((plan) => {
+          {displayPlans.map((plan) => {
             return (
               <div
                 key={plan.slug}
@@ -222,18 +244,28 @@ export function PlanosSection({ plans }: Props) {
           })}
         </div>
 
+        <div className="mt-8 text-center">
+          <Link
+            href="/precos"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition-colors hover:text-white"
+          >
+            Ver todos os pacotes e comparar volumes
+            <ArrowRight className="h-4 w-4 text-brand" />
+          </Link>
+        </div>
+
         {/* ── SELEÇÃO PERSONALIZADA (5 A 5.000 CRÉDITOS) ── */}
         <div className="mt-14 rounded-[36px] border-2 border-brand/40 bg-gradient-to-b from-[#1C1D22] via-[#141518] to-[#0F1013] p-7 sm:p-10 shadow-[0_0_60px_rgba(255,92,0,0.18)]">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-brand/15 px-3 py-1 text-xs font-bold text-brand border border-brand/30 mb-2">
-                <Sliders className="h-3.5 w-3.5" /> Escolha Livre: de 5 até 5.000 Créditos
+                <Sliders className="h-3.5 w-3.5" /> Recarga para clientes: 5 a 5.000 créditos
               </div>
               <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
-                Precisa de uma quantidade personalizada?
+                Já é cliente? Recarregue com desconto progressivo.
               </h3>
               <p className="text-sm text-text-secondary mt-1">
-                Escolha qualquer volume entre 5 e 5.000 cortes com desconto progressivo automático no atacado.
+                Escolha o volume e pague no Pix. Os créditos entram na sua licença atual, com desconto automático no atacado.
               </p>
             </div>
 
@@ -344,10 +376,17 @@ export function PlanosSection({ plans }: Props) {
                   className="w-full h-15 font-black text-base bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 text-white rounded-2xl shadow-[0_4px_30px_rgba(255,92,0,0.45)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Sparkles className="h-5 w-5 mr-2" />
-                  Gerar Pix ({customPricing.credits} Créditos)
+                  Recarregar {customPricing.credits} créditos
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
               </Link>
+              <p className="mt-2.5 text-center text-[11px] text-text-secondary">
+                Ainda não tem licença?{' '}
+                <Link href="/contato" className="text-brand hover:underline font-semibold">
+                  Fale com o suporte
+                </Link>{' '}
+                para comprar um volume personalizado.
+              </p>
             </div>
           </div>
         </div>

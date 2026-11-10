@@ -28,7 +28,9 @@ const schema = z.object({
   email: z.string().min(1, 'Informe seu e-mail').email('E-mail inválido'),
   phone: z.string().max(30).optional(),
   includeCourse: z.boolean().default(false),
-  consent: z.literal(true, { message: 'Você precisa aceitar os termos' }),
+  consent: z.boolean().refine((value) => value === true, {
+    message: 'Você precisa aceitar os Termos de Uso e a Política de Privacidade',
+  }),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -72,7 +74,7 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
       email: '',
       phone: '',
       includeCourse: false,
-      consent: true,
+      consent: false,
     },
   });
 
@@ -298,7 +300,7 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
                   <span className="text-brand font-bold">✓</span> Aulas práticas de Premiere & Whisper IA
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-300">
-                  <span className="text-brand font-bold">✓</span> Acesso ao Grupo VIP no WhatsApp
+                  <span className="text-brand font-bold">✓</span> Acesso vitalício ao curso e às atualizações
                 </div>
               </div>
             </div>
@@ -409,11 +411,15 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
             {...register('consent')}
           />
           <Label htmlFor="consent" className="font-normal text-xs text-neutral-400 cursor-pointer">
-            Concordo com os{' '}
-            <a href="/termos" className="text-brand hover:underline">
-              termos de uso
+            Li e aceito os{' '}
+            <a href="/termos" className="text-brand hover:underline" target="_blank" rel="noreferrer">
+              Termos de Uso
+            </a>{' '}
+            e a{' '}
+            <a href="/privacidade" className="text-brand hover:underline" target="_blank" rel="noreferrer">
+              Política de Privacidade
             </a>
-            . Compreendo que este é um pagamento único pré-pago sem mensalidades ou cobranças recorrentes.
+            . Entendo que este é um pagamento único pré-pago, sem mensalidade ou cobrança recorrente.
           </Label>
         </div>
         {errors.consent && <p className="mt-1 text-xs text-rose-500">{errors.consent.message}</p>}
