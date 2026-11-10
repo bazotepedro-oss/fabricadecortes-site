@@ -26,12 +26,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const customer = await prisma.customer.findUnique({ where: { id: order.customerId } });
   const plan = await prisma.plan.findUnique({ where: { id: order.planId } });
   if (customer && plan) {
+    const meta = (order.metadata || {}) as Record<string, unknown>;
+    const includeCourse = meta.includeCourse === true || meta.includeCourse === 'true';
     await provision({
       customerId: customer.id,
       orderId: order.id,
       subscriptionId: subscription.id,
       email: customer.email,
       plan: plan.slug,
+      includeCourse,
     });
   }
 
