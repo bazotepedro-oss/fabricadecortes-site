@@ -1,10 +1,10 @@
-import { BadgeCheck, Clock3, MonitorPlay, Zap } from 'lucide-react';
+import { BadgeCheck, Clapperboard, Clock3, Zap } from 'lucide-react';
 
 const STATS = [
   { icon: Zap, value: '5 segundos', label: 'Liberação da licença via Pix' },
   { icon: BadgeCheck, value: '365 dias', label: 'Seus créditos nunca expiram no mês' },
-  { icon: MonitorPlay, value: 'Formato vertical', label: 'Pronto para Reels, TikTok e Shorts' },
-  { icon: Clock3, value: '1 crédito', label: '1 vídeo completo com IA' },
+  { icon: Clapperboard, value: 'Vertical + 16:9', label: 'Cortes para Shorts e compilado para YouTube' },
+  { icon: Clock3, value: '1 crédito', label: '1 corte viral completo com IA' },
 ];
 
 export function StatsStrip() {

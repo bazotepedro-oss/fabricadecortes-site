@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 const NAV_LINKS = [
   { label: 'Como Funciona', href: '/#como-funciona' },
   { label: 'Recursos', href: '/#recursos' },
+  { label: 'Melhores Momentos', href: '/#melhores-momentos' },
   { label: 'Planos & Preços', href: '/#planos' },
   { label: 'Dúvidas', href: '/#faq' },
 ];
@@ -17,7 +18,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#0A0A0C]/90 backdrop-blur-2xl transition-all duration-300">
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
         
         {/* ── Brand Logo & Name ── */}
         <Link href="/" className="flex items-center gap-3 group shrink-0">
@@ -44,7 +45,7 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="px-4 py-1.5 text-sm font-medium text-neutral-300 hover:text-white rounded-full hover:bg-white/[0.08] transition-all duration-200 whitespace-nowrap"
+              className="px-3 py-1.5 text-sm font-medium text-neutral-300 hover:text-white rounded-full hover:bg-white/[0.08] transition-all duration-200 whitespace-nowrap"
             >
               {item.label}
             </Link>
@@ -64,7 +65,7 @@ export function Navbar() {
           <Link href="/#planos">
             <Button
               size="sm"
-              className="h-10 px-5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_25px_rgba(255,92,0,0.35)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
+              className="h-10 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand via-orange-500 to-amber-500 hover:brightness-110 shadow-[0_0_25px_rgba(255,92,0,0.35)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
             >
               <Sparkles className="w-4 h-4 mr-1.5" />
               Garantir Créditos

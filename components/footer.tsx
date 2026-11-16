@@ -4,6 +4,7 @@ import { Flame, Mail } from 'lucide-react';
 const LINKS = [
   { label: 'Recursos', href: '/#recursos' },
   { label: 'Como funciona', href: '/#como-funciona' },
+  { label: 'Melhores Momentos', href: '/#melhores-momentos' },
   { label: 'Planos & Preços', href: '/#planos' },
   { label: 'Área de Membros VIP', href: '/membros' },
   { label: 'Recarregar Créditos', href: '/recarga' },
@@ -36,7 +37,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-text-secondary max-w-sm">
-              Corte vídeos longos em virais com IA em segundos. Legendas dinâmicas estilo TikTok e enquadramento automático de rostos no <span className="text-brand font-semibold">fabricadecortes.com</span>.
+              Transforme podcasts em cortes virais para TikTok, Reels e Shorts e monte o compilado Melhores Momentos em 16:9 para o YouTube, com legendas, capítulos e IA no <span className="text-brand font-semibold">fabricadecortes.com</span>.
             </p>
             <div className="pt-2 text-xs text-text-secondary">
               <p>

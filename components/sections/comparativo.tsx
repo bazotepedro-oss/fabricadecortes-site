@@ -31,6 +31,13 @@ const COMPARISON_ROWS = [
     highlight: false,
   },
   {
+    feature: 'Compilado dos melhores momentos para YouTube',
+    forja: 'Sim: 16:9 com trechos completos de 60 s a 5 min, SRT e capítulos',
+    opus: 'Não: entrega apenas clipes curtos',
+    submagic: 'Não: foca em clipes curtos para redes sociais',
+    highlight: true,
+  },
+  {
     feature: 'Enquadramento automático do rosto',
     forja: 'Sim, mantém quem fala sempre no centro',
     opus: 'Sim, mas corta partes de 2 convidados',

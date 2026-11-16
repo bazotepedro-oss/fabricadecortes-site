@@ -44,19 +44,19 @@ export function Hero() {
           <div className="space-y-7 lg:col-span-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand/50 bg-brand/10 px-4 py-1.5 text-xs font-bold text-brand shadow-[0_0_20px_rgba(255,92,0,0.25)]">
               <Flame className="h-4 w-4 animate-pulse text-brand" />
-              <span>Sem Mensalidade Presa • 1 Crédito = 1 Vídeo Pronto</span>
+              <span>Cortes Virais + Melhores Momentos • Sem Mensalidade</span>
             </div>
 
             <h1 className="font-display text-4xl font-extrabold leading-[1.10] tracking-tight text-text-primary sm:text-5xl lg:text-5xl xl:text-6xl">
-              Corte podcasts e vídeos longos em{' '}
+              Corte podcasts em virais e monte o{' '}
               <span className="bg-gradient-to-r from-brand via-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
-                virais milionários
+                Melhores Momentos
               </span>{' '}
-              com IA em segundos.
+              com IA.
             </h1>
 
             <p className="max-w-xl mx-auto lg:mx-0 text-base sm:text-lg text-text-secondary leading-relaxed">
-              Esqueça pagar R$ 150 todo mês em ferramentas gringas. Compre créditos avulsos no Pix, gere cortes verticais com legendas automáticas e enquadramento inteligente — prontos para postar.
+              Gere cortes verticais com legendas e enquadramento inteligente para Reels, TikTok e Shorts. E deixe a IA montar um compilado 16:9 com os trechos completos mais fortes do podcast, com capítulos e SRT prontos para o YouTube — sem mensalidade, com créditos no Pix.
             </p>
 
             {/* CTAs — Botões Grandes, Marcantes e Imponentes */}

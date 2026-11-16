@@ -16,11 +16,11 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Fábrica dos Cortes | Corte vídeos longos em virais com IA',
-  description: 'Acesse a Fábrica dos Cortes (fabricadecortes.com). Transforme vídeos longos em cortes prontos para TikTok, Reels e Shorts com IA.',
+  title: 'Fábrica dos Cortes | Cortes virais e Melhores Momentos com IA',
+  description: 'Transforme podcasts em cortes para TikTok, Reels e Shorts e monte o Melhores Momentos em 16:9 para o YouTube, com legendas, capítulos e IA. Sem mensalidade, créditos no Pix.',
   openGraph: {
     title: 'Fábrica dos Cortes (fabricadecortes.com)',
-    description: 'Cortes virais com IA em segundos. Sem mensalidade, créditos no Pix.',
+    description: 'Cortes virais e compilado Melhores Momentos para YouTube com IA. Sem mensalidade, créditos no Pix.',
     type: 'website',
   },
   icons: {

@@ -1,4 +1,4 @@
-import { Sparkles, Video, Subtitles, Zap, Shield, Headphones, Globe, FileVideo, Wand2 } from 'lucide-react';
+import { Sparkles, Video, Subtitles, Zap, Clapperboard, Headphones, Globe, FileVideo, Wand2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const FEATURES = [
@@ -6,7 +6,7 @@ const FEATURES = [
   { icon: Subtitles, title: 'Legendas automáticas', description: 'Legendas prontas, com destaque nas palavras e emojis.' },
   { icon: Video, title: 'Otimizado para Reels/TikTok/Shorts', description: 'Formato vertical perfeito para cada plataforma.' },
   { icon: Zap, title: 'Processamento rápido', description: 'Seus vídeos ficam prontos em minutos, sem travar seu computador.' },
-  { icon: Shield, title: 'Acesso seguro', description: 'Seu acesso é liberado na hora, com total segurança.' },
+  { icon: Clapperboard, title: 'Melhores Momentos para YouTube', description: 'Compilado 16:9 com trechos completos de 60 s a 5 min, legenda SRT e capítulos.' },
   { icon: Headphones, title: 'Suporte', description: 'Equipe disponível para ajudar com configuração e uso.' },
   { icon: Globe, title: 'Sem complicação técnica', description: 'Instale, acesse e corte. Interface moderna e direta.' },
   { icon: FileVideo, title: 'Tradução automática', description: 'Traduza legendas para 10+ línguas automaticamente.' },

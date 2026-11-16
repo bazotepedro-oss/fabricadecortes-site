@@ -5,7 +5,7 @@ const STEPS = [
   { icon: Coins, title: 'Escolha seu Pacote', description: 'De 15 até 250 créditos ou monte uma quantidade avulsa sob medida. Sem assinatura no cartão.' },
   { icon: Zap, title: 'Pix Instantâneo', description: 'Checkout seguro com QR Code Pix via AbacatePay e aprovação em menos de 5 segundos.' },
   { icon: Unlock, title: 'Chave e Acesso Imediatos', description: 'Sua licença e seus créditos chegam automaticamente no seu e-mail e na Área VIP, prontos para usar.' },
-  { icon: Headphones, title: 'Corte e Viralize', description: 'Cole o link do podcast no computador ou na nuvem e receba os cortes verticais com legendas em minutos.' },
+  { icon: Headphones, title: 'Corte, compile e viralize', description: 'Receba cortes verticais para Reels, TikTok e Shorts e monte o Melhores Momentos em 16:9 para o YouTube, com capítulos e SRT.' },
 ];
 
 export function ComoFunciona() {

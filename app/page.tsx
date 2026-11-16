@@ -3,6 +3,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Hero } from '@/components/sections/hero';
 import { StatsStrip } from '@/components/sections/stats-strip';
+import { MelhoresMomentos } from '@/components/sections/melhores-momentos';
 import { ComoFunciona } from '@/components/sections/como-funciona';
 import { Recursos } from '@/components/sections/recursos';
 import { ComparativoSection } from '@/components/sections/comparativo';
@@ -21,6 +22,7 @@ export default async function HomePage() {
       <Navbar />
       <Hero />
       <StatsStrip />
+      <MelhoresMomentos />
       <ComoFunciona />
       <Recursos />
       <ComparativoSection />

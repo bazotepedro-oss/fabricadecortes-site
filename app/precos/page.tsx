@@ -4,7 +4,7 @@ import { formatPrice, cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { Check, Coins, Zap, ShieldCheck } from 'lucide-react';
+import { Check, Clapperboard, Coins, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const revalidate = 60;
@@ -43,6 +43,13 @@ export default async function PrecosPage() {
             <p className="mx-auto mt-4 max-w-2xl text-base text-text-secondary">
               Pague uma única vez via Pix. Use quando quiser: seus créditos têm validade de 1 ano inteiro e nunca expiram no fim do mês.
             </p>
+            <div className="mx-auto mt-6 inline-flex max-w-2xl flex-wrap items-center justify-center gap-2 rounded-2xl border border-brand/25 bg-surface/80 px-4 py-2.5 text-xs text-text-secondary">
+              <Clapperboard className="h-4 w-4 shrink-0 text-brand" />
+              <span>
+                <strong className="text-text-primary">Melhores Momentos:</strong> 10 créditos por
+                compilado 16:9 com capítulos e legenda SRT para o YouTube.
+              </span>
+            </div>
           </div>
         </section>
 

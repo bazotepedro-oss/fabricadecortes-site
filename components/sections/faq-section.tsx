@@ -11,6 +11,18 @@ const FAQ = [
     a: 'NÃO cobramos nenhuma mensalidade e não prendemos seu cartão de crédito! Você compra apenas os créditos que desejar via Pix (1 crédito = 1 corte viral completo com legendas automáticas e enquadramento inteligente). Seus créditos ficam salvos na sua chave e nunca são apagados no fim do mês.',
   },
   {
+    q: 'O que é o Melhores Momentos e como ele funciona?',
+    a: 'É o compilado 16:9 para YouTube. A IA lê a transcrição do podcast inteiro, escolhe os momentos completos mais fortes — normalmente de 60 segundos a 5 minutos cada — e monta um único vídeo com transições, abrindo pelo melhor trecho. Você recebe o MP4 em 1920×1080, a legenda SRT e o título, descrição e capítulos prontos para publicar.',
+  },
+  {
+    q: 'O compilado tem limite de 5 ou 10 minutos?',
+    a: 'Não. No modo automático, a IA usa todos os melhores momentos que encontrar, sem um teto fixo de 5 ou 10 minutos. Se preferir um tamanho específico, basta informar a duração desejada no campo de minutos — o compilado tenta chegar àquela duração.',
+  },
+  {
+    q: 'Quantos créditos custa o Melhores Momentos?',
+    a: 'Cada compilado custa 10 créditos. A cobrança só é confirmada quando o vídeo fica pronto. Se a IA não encontrar material suficiente para a duração escolhida, nada é entregue e os 10 créditos voltam automaticamente para a sua licença.',
+  },
+  {
     q: 'Quanto tempo duram os créditos após a compra?',
     a: 'Todos os pacotes de créditos têm validade de 365 dias (1 ano inteiro). Você pode usar 5 vídeos hoje, 10 mês que vem e o restante quando quiser. Nada expira às pressas.',
   },
