@@ -190,9 +190,12 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
       <!-- Botões de Ação Principais -->
       <div style="text-align:center;margin:28px 0 20px;">
         <!-- Botão Google Drive -->
-        <a href="${driveLink}" target="_blank" style="display:block;background:linear-gradient(135deg, #FF5C00, #E04800);color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 16px rgba(255,92,0,0.35);">
+        <a href="${driveLink}" target="_blank" style="display:block;background:linear-gradient(135deg, #FF5C00, #E04800);color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:6px;box-shadow:0 4px 16px rgba(255,92,0,0.35);">
           📁 Acessar Google Drive (${input.includeCourse ? 'Aulas e Instalador' : 'Instalador e Guia'})
         </a>
+        <p style="margin:0 0 16px;font-size:11px;line-height:1.5;color:#8A8A8A;word-break:break-all;">
+          Link direto: <a href="${driveLink}" target="_blank" style="color:#FF7A1A;text-decoration:none;">${driveLink}</a>
+        </p>
 
         <!-- Botão WhatsApp -->
         <a href="${whatsappLink}" target="_blank" style="display:block;background:#25D366;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 16px rgba(37,211,102,0.3);">
