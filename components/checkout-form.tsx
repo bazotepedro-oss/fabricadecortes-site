@@ -43,7 +43,7 @@ const PLAN_PRICES: Record<string, { name: string; price: number; credits: number
   pack_pro: { name: 'Pack Agência / Pro (250 Vídeos)', price: 139.90, credits: 250 },
 };
 
-const COURSE_ORDER_BUMP_PRICE = 47.00;
+const COURSE_ORDER_BUMP_PRICE = 9.9;
 
 interface AppliedCoupon {
   code: string;
@@ -266,7 +266,7 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
             </span>
             <span className="text-xs font-bold text-orange-400">
               De <span className="line-through text-neutral-400">R$ 197,00</span> por{' '}
-              <strong className="text-white text-sm">R$ 47,00</strong>
+              <strong className="text-white text-sm">R$ 9,90</strong>
             </span>
           </div>
 
@@ -279,28 +279,31 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
             />
             <div className="space-y-1.5">
               <div className="font-extrabold text-sm sm:text-base text-white flex items-center gap-2 flex-wrap">
-                <span>SIM! Levar o Curso Completo + Área de Membros VIP</span>
+                <span>SIM! Quero o Curso Completo + Área de Membros</span>
                 <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  +R$ 47,00 (76% OFF)
+                  +R$ 9,90 (95% OFF)
                 </span>
               </div>
 
               <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                Aprenda a criar cortes virais de alta retenção no estilo <strong>Netflix</strong>: técnica dos 3 segundos (hooks), legendas magnéticas com emojis, sound design profissional, workshops e análises práticas de vídeos com +1 milhão de views.
+                Aprenda a editar os cortes que você já gera: como escolher o gancho dos primeiros
+                segundos, montar legendas que prendem a leitura, limpar o áudio e finalizar o vídeo
+                no Premiere. São aulas práticas, workshops e análise de vídeos que passaram de
+                1 milhão de views.
               </p>
 
               <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-neutral-400 font-medium">
                 <div className="flex items-center gap-1.5 text-neutral-300">
-                  <span className="text-brand font-bold">✓</span> Plataforma VIP estilo Netflix vitalícia
+                  <span className="text-brand font-bold">✓</span> Todas as aulas na área de membros
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-300">
-                  <span className="text-brand font-bold">✓</span> Pack com 500+ Efeitos Sonoros (SFX)
+                  <span className="text-brand font-bold">✓</span> Pack com 500+ efeitos sonoros (SFX)
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-300">
-                  <span className="text-brand font-bold">✓</span> Aulas práticas de Premiere & Whisper IA
+                  <span className="text-brand font-bold">✓</span> Aulas de Premiere e Whisper IA
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-300">
-                  <span className="text-brand font-bold">✓</span> Acesso vitalício ao curso e às atualizações
+                  <span className="text-brand font-bold">✓</span> Acesso vitalício, sem mensalidade
                 </div>
               </div>
             </div>
@@ -382,9 +385,9 @@ export function CheckoutForm({ defaultSlug = 'pack_criador' }: CheckoutFormProps
           {includeCourse && (
             <div className="flex justify-between text-orange-400 font-semibold animate-in fade-in duration-200">
               <span className="flex items-center gap-1">
-                <PlayCircle className="w-3.5 h-3.5" /> Order Bump (Curso + Área VIP Netflix):
+                <PlayCircle className="w-3.5 h-3.5" /> Curso Completo + Área de Membros:
               </span>
-              <span>+ R$ 47,00</span>
+              <span>+ R$ 9,90</span>
             </div>
           )}
 

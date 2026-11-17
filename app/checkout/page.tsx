@@ -85,15 +85,17 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
                 <div className="rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/10 via-surface to-background p-5 shadow-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-brand text-white">
-                      Área de Membros VIP
+                      Curso + Área de Membros
                     </span>
-                    <span className="text-xs font-bold text-orange-400">Estilo Netflix 🎬</span>
+                    <span className="text-xs font-bold text-orange-400">R$ 9,90</span>
                   </div>
                   <h4 className="text-sm font-black text-text-primary">
-                    Aprenda a Estrutura dos Vídeos Virais
+                    Aprenda a editar os cortes que a IA gera
                   </h4>
                   <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
-                    Marque o <strong>Order Bump</strong> no formulário para levar o Curso Completo de Edição Cinematográfica com mais de 500 efeitos sonoros e workshops práticos por apenas <strong>+R$ 47,00</strong>!
+                    Marque a opção do curso no formulário e leve as aulas de edição, o pack com 500+
+                    efeitos sonoros e os workshops de Premiere e Whisper IA por apenas{' '}
+                    <strong>+R$ 9,90</strong>.
                   </p>
                 </div>
 

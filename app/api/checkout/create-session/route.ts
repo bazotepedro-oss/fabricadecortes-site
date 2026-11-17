@@ -80,7 +80,7 @@ export async function POST(req: Request) {
   }
 
   // Preço base com ou sem Order Bump do Curso
-  const COURSE_ORDER_BUMP_CENTS = 4700; // R$ 47,00
+  const COURSE_ORDER_BUMP_CENTS = 990; // R$ 9,90
   const subtotalAmount = includeCourse ? plan.price + COURSE_ORDER_BUMP_CENTS : plan.price;
 
   // Busca e validação do Afiliado / YouTuber / Cupom
