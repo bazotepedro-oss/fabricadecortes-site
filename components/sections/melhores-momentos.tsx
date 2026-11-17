@@ -4,13 +4,12 @@ import {
   Captions,
   Clapperboard,
   Clock3,
-  ListVideo,
-  Play,
   Sparkles,
   Timer,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { YouTubeEmbed } from '@/components/youtube-embed';
 
 const HIGHLIGHTS = [
   {
@@ -39,12 +38,7 @@ const HIGHLIGHTS = [
   },
 ];
 
-const CHAPTERS = [
-  { time: '00:00', title: 'A pergunta que mudou a conversa' },
-  { time: '07:42', title: 'A história que ninguém esperava' },
-  { time: '21:18', title: 'A opinião mais polêmica do episódio' },
-  { time: '38:05', title: 'O conselho que vale o podcast inteiro' },
-];
+const FILES = ['MP4 1920×1080', 'Legenda SRT', 'Capítulos', 'Trechos de 60 s a 5 min'];
 
 export function MelhoresMomentos() {
   return (
@@ -108,92 +102,22 @@ export function MelhoresMomentos() {
             </div>
           </div>
 
-          {/* Mock do compilado */}
+          {/* Vídeo do compilado */}
           <div className="relative lg:col-span-6">
             <div className="absolute -inset-4 rounded-[36px] bg-brand/10 blur-3xl" />
-            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-b from-[#17100C] to-[#0B0806] p-4 shadow-[0_30px_90px_-30px_rgba(255,107,26,0.45)] sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15 text-brand">
-                    <Clapperboard className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-brand">
-                      Melhores Momentos
-                    </p>
-                    <p className="text-[10px] text-white/45">Flow #663 — FABIO AKITA</p>
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Pronto
-                </span>
-              </div>
-
-              <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(ellipse_at_center,#2A160C_0%,#0A0705_72%)]">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:36px_36px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_40%,black,transparent)]" />
-                <span className="absolute left-3 top-3 rounded-full border border-brand/30 bg-black/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-brand backdrop-blur-sm">
-                  Cold open
-                </span>
-                <span className="absolute right-3 top-3 rounded-md bg-black/60 px-2 py-1 text-[10px] font-bold text-white/80 backdrop-blur-sm">
-                  52:14
-                </span>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-[0_0_40px_rgba(255,107,26,0.6)]">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
-                    <Play className="relative ml-0.5 h-6 w-6 fill-white" />
-                  </span>
-                  <div className="text-center">
-                    <p className="text-xs font-extrabold uppercase tracking-wider text-white">
-                      Compilado 16:9
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-white/55">17 momentos · 52,2 min</p>
-                  </div>
-                </div>
-
-                <div className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-black/45 px-3 py-2.5 backdrop-blur-sm">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                    <div className="h-full w-[38%] rounded-full bg-gradient-to-r from-brand to-amber-400" />
-                  </div>
-                  <div className="mt-1.5 flex items-center justify-between text-[9px] font-semibold text-white/55">
-                    <span>1920×1080 · 30 FPS</span>
-                    <span>AAC 192 kbps</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/25 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/50">
-                    <ListVideo className="h-3.5 w-3.5 text-brand" /> Capítulos do YouTube
-                  </span>
-                  <span className="text-[9px] font-semibold text-white/35">4 de 17</span>
-                </div>
-                <div className="space-y-1.5">
-                  {CHAPTERS.map((chapter) => (
-                    <div
-                      key={chapter.time}
-                      className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <span className="w-10 shrink-0 font-mono text-[10px] font-bold text-brand">
-                        {chapter.time}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/80">
-                        {chapter.title}
-                      </span>
-                      <Play className="h-3 w-3 shrink-0 fill-white/25 text-white/25" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="relative">
+              <YouTubeEmbed
+                videoId="g2l04XfdmrY"
+                title="Melhores Momentos na prática"
+              />
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {['MP4 1080p', 'Legenda SRT', 'Capítulos', 'Transições'].map((chip) => (
+                {FILES.map((file) => (
                   <span
-                    key={chip}
+                    key={file}
                     className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white/55"
                   >
-                    {chip}
+                    {file}
                   </span>
                 ))}
               </div>

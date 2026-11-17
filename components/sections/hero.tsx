@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Flame,
@@ -9,27 +8,11 @@ import {
   CheckCircle2,
   Sliders,
   Star,
-  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { VslOverlay } from '@/components/vsl-overlay';
+import { YouTubeEmbed } from '@/components/youtube-embed';
 
 export function Hero() {
-  const [vslOpen, setVslOpen] = useState(false);
-  const youtubeConfigured = Boolean(process.env.NEXT_PUBLIC_VSL_YOUTUBE_URL);
-
-  useEffect(() => {
-    if (!youtubeConfigured || typeof window === 'undefined') return;
-    if (window.sessionStorage.getItem('fdc_vsl_auto_opened') === '1') return;
-
-    const timer = window.setTimeout(() => {
-      setVslOpen(true);
-      window.sessionStorage.setItem('fdc_vsl_auto_opened', '1');
-    }, 900);
-
-    return () => window.clearTimeout(timer);
-  }, [youtubeConfigured]);
-
   return (
     <section className="relative overflow-hidden border-b border-border py-16 md:py-24">
       {/* Background Ambient Glows */}
@@ -84,20 +67,6 @@ export function Hero() {
               </Link>
             </div>
 
-            {/* Atalho para a VSL */}
-            <div className="flex justify-center lg:justify-start">
-              <button
-                type="button"
-                onClick={() => setVslOpen(true)}
-                className="group inline-flex items-center gap-2.5 text-xs font-bold text-text-secondary transition-colors hover:text-white"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand/30 bg-brand/10 text-brand transition-colors group-hover:bg-brand/20">
-                  <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
-                </span>
-                Assistir à apresentação em 6 minutos
-              </button>
-            </div>
-
             {/* Social proof + trust */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
               <div className="flex items-center justify-center lg:justify-start gap-3">
@@ -142,70 +111,16 @@ export function Hero() {
 
           {/* Right Column: VSL em destaque */}
           <div className="relative flex justify-center lg:col-span-6">
-            <div className="absolute -inset-6 rounded-[40px] bg-brand/10 blur-3xl" />
-
-            <div className="relative w-full max-w-2xl">
-              <button
-                type="button"
-                onClick={() => setVslOpen(true)}
-                aria-label="Assistir à apresentação em vídeo"
-                className="group relative block w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0B0B0D] text-left shadow-[0_30px_90px_-30px_rgba(255,107,26,0.45)] transition-transform duration-300 hover:scale-[1.01]"
-              >
-                <div className="relative aspect-video w-full">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,107,26,0.22),transparent_65%)]" />
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,black,transparent)]" />
-
-                  {/* Topo do player */}
-                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src="/logo.png"
-                        alt="Fábrica dos Cortes"
-                        className="h-8 w-8 rounded-lg object-contain"
-                      />
-                      <span className="text-xs font-extrabold tracking-tight text-white">
-                        Fábrica dos Cortes
-                      </span>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brand" /> VSL oficial
-                    </span>
-                  </div>
-
-                  {/* Play central */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
-                    <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-brand text-white shadow-[0_0_45px_rgba(255,107,26,0.65)] transition-transform duration-300 group-hover:scale-105">
-                      <span className="absolute inset-0 animate-ping rounded-full bg-brand/35" />
-                      <Play className="relative ml-1 h-7 w-7 fill-white" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-extrabold uppercase tracking-wider text-white">
-                        Assistir à apresentação
-                      </p>
-                      <p className="mt-1 text-[11px] text-white/60">
-                        Veja como funciona em 6 minutos
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Base do player */}
-                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-white/10 bg-black/50 px-5 py-3 backdrop-blur-sm">
-                    <span className="text-[11px] font-semibold text-white/70">
-                      Menos edição. Mais conteúdo no ar.
-                    </span>
-                    <span className="text-[11px] font-bold text-white/60">6 min</span>
-                  </div>
-                </div>
-              </button>
-
-              <p className="mt-3 text-center text-[11px] text-text-secondary">
-                Clique para assistir com som — sem sair da página.
-              </p>
+            <div className="w-full max-w-2xl">
+              <YouTubeEmbed
+                videoId="GHN6FqrnrIA"
+                title="Apresentação Fábrica dos Cortes"
+                sound
+              />
             </div>
           </div>
         </div>
       </div>
-      <VslOverlay open={vslOpen} onClose={() => setVslOpen(false)} />
     </section>
   );
 }
