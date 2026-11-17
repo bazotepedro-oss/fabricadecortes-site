@@ -60,7 +60,7 @@ export default function SuportePage() {
             <div className="pt-2">
               <Button asChild size="sm" className="w-full sm:w-auto bg-brand hover:bg-brand/90 text-white font-bold">
                 <a
-                  href="https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/ViralCutter.ipynb"
+                  href="https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/FabricaDosCortes.ipynb"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -97,16 +97,21 @@ export default function SuportePage() {
               <MessageCircle className="h-5 w-5" /> 4. Grupo VIP no WhatsApp
             </div>
             <p className="text-xs leading-relaxed text-text-secondary">
-              Participe da nossa comunidade exclusiva de alunos no WhatsApp para tirar dúvidas, receber dicas de monetização e suporte direto da nossa equipe.
+              Participe da nossa comunidade de alunos no WhatsApp para tirar dúvidas, receber dicas de monetização e suporte direto da nossa equipe.
             </p>
-            <div className="pt-2">
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row">
               <Button asChild size="sm" className="w-full sm:w-auto bg-[#25D366] hover:bg-[#20ba59] text-white font-bold">
                 <a
-                  href="https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC"
+                  href="https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s"
                   target="_blank"
                   rel="noreferrer"
                 >
                   <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Entrar no Grupo WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto border-emerald-500/40 text-emerald-400">
+                <a href="https://wa.me/5518981223199" target="_blank" rel="noreferrer">
+                  <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Suporte direto: (18) 98122-3199
                 </a>
               </Button>
             </div>
@@ -133,7 +138,11 @@ export default function SuportePage() {
         <div className="mt-10 rounded-2xl border border-border bg-surface/50 p-6 text-center space-y-2">
           <p className="text-sm font-semibold text-text-primary">Ainda precisa de suporte pessoal?</p>
           <p className="text-xs text-text-secondary">
-            Entre na nossa comunidade no Discord ou envie um e-mail para{' '}
+            Fale no WhatsApp{' '}
+            <a href="https://wa.me/5518981223199" target="_blank" rel="noreferrer" className="text-brand underline">
+              (18) 98122-3199
+            </a>{' '}
+            ou envie um e-mail para{' '}
             <a href="mailto:contato@fabricadecortes.com" className="text-brand underline">
               contato@fabricadecortes.com
             </a>

@@ -53,31 +53,31 @@ export default function ContatoPage() {
             </p>
             <p className="font-semibold text-text-primary text-sm">
               <a
-                href="https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC"
+                href="https://wa.me/5518981223199"
                 target="_blank"
                 rel="noreferrer"
                 className="text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold"
               >
-                Entrar no Grupo VIP &rarr;
+                Falar no WhatsApp: (18) 98122-3199 &rarr;
               </a>
             </p>
           </div>
 
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-3">
             <div className="flex items-center gap-2 text-brand font-bold text-sm">
-              <MessageSquare className="h-4 w-4" /> Comunidade no Discord
+              <MessageSquare className="h-4 w-4" /> Grupo de alunos
             </div>
             <p className="text-xs text-text-secondary">
-              Tire dúvidas rápidas e troque ideias com outros criadores:
+              Tire dúvidas e troque ideias com outros criadores no grupo oficial:
             </p>
             <p className="font-semibold text-text-primary text-sm">
               <a
-                href="https://discord.gg/tAdPHFAbud"
+                href="https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s"
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline inline-flex items-center gap-1"
               >
-                discord.gg/tAdPHFAbud &rarr;
+                Entrar no grupo do WhatsApp &rarr;
               </a>
             </p>
           </div>

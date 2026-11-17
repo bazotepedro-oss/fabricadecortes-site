@@ -82,11 +82,11 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
   const whatsappLink =
     input.whatsappUrl ||
     process.env.WHATSAPP_GROUP_URL ||
-    'https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC';
+    'https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s';
   const colabLink =
     input.colabUrl ||
     process.env.COLAB_NOTEBOOK_URL ||
-    'https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/ViralCutter.ipynb';
+    'https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/FabricaDosCortes.ipynb';
   const accessPage = input.accessUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://fabricadecortes.com'}/retorno`;
   const membersLink =
     input.membersUrl ||
@@ -198,9 +198,13 @@ export async function sendAccessEmail(input: SendAccessEmailInput): Promise<{ ok
         </p>
 
         <!-- Botão WhatsApp -->
-        <a href="${whatsappLink}" target="_blank" style="display:block;background:#25D366;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:12px;box-shadow:0 4px 16px rgba(37,211,102,0.3);">
+        <a href="${whatsappLink}" target="_blank" style="display:block;background:#25D366;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none;padding:14px 24px;border-radius:10px;margin-bottom:8px;box-shadow:0 4px 16px rgba(37,211,102,0.3);">
           💬 ${input.includeCourse ? 'Entrar no Grupo VIP do WhatsApp' : 'Entrar no Grupo de Suporte'}
         </a>
+        <p style="margin:0 0 14px;font-size:11px;line-height:1.5;color:#8A8A8A;">
+          Suporte direto no WhatsApp:
+          <a href="https://wa.me/5518981223199" target="_blank" style="color:#25D366;text-decoration:none;font-weight:700;">(18) 98122-3199</a>
+        </p>
 
         <!-- Botão Google Colab (opcional nuvem) -->
         <a href="${colabLink}" target="_blank" style="display:inline-block;background:#262626;border:1px solid #3D3D3D;color:#D1D5DB;font-size:13px;font-weight:600;text-decoration:none;padding:10px 20px;border-radius:8px;margin-top:4px;">

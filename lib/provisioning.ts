@@ -63,7 +63,7 @@ export function driveUrl(): string {
 export function whatsappUrl(): string {
   return (
     process.env.WHATSAPP_GROUP_URL ||
-    'https://chat.whatsapp.com/JlJ6ZJjBNpS7E9ErFSyMvC'
+    'https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s'
   );
 }
 
@@ -82,7 +82,7 @@ export function membersUrl(): string {
 export function colabUrl(): string {
   return (
     process.env.COLAB_NOTEBOOK_URL ||
-    'https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/ViralCutter.ipynb'
+    'https://colab.research.google.com/github/bazotepedro-oss/forjaviral/blob/main/FabricaDosCortes.ipynb'
   );
 }
 
