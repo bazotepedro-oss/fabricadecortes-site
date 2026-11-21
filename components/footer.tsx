@@ -12,6 +12,18 @@ const LINKS = [
   { label: 'Dúvidas Frequentes', href: '/#faq' },
 ];
 
+// Links internos para as páginas de nicho (ajudam o Google a encontrá-las).
+const NICHOS = [
+  { label: 'Cortes com IA', href: '/cortes-com-ia' },
+  { label: 'Cortes de live', href: '/cortes-de-live' },
+  { label: 'Cortes de GTA 6', href: '/cortes-gta-6' },
+  { label: 'Cortes para streamers', href: '/cortes-para-streamers' },
+  { label: 'Cortes de podcast', href: '/cortes-de-podcast' },
+  { label: 'Legendas automáticas', href: '/legendas-automaticas' },
+  { label: 'Canal de cortes', href: '/canal-de-cortes' },
+  { label: 'Alternativa ao Opus Clip', href: '/alternativa-opus-clip' },
+];
+
 const LEGAL = [
   { label: 'Termos de uso', href: '/termos' },
   { label: 'Reembolso', href: '/termos#reembolso' },
@@ -24,7 +36,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-surface">
       <div className="mx-auto w-full max-w-6xl px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-5">
           <div className="space-y-3 md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 group">
               <img
@@ -37,7 +49,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-text-secondary max-w-sm">
-              Transforme podcasts em cortes virais para TikTok, Reels e Shorts e monte o compilado Melhores Momentos em 16:9 para o YouTube, com legendas, capítulos e IA no <span className="text-brand font-semibold">fabricadecortes.com</span>.
+              Cortes com IA para podcasts, lives e streamers: cortes virais para TikTok, Reels e Shorts e monte o compilado Melhores Momentos em 16:9 para o YouTube, com legendas, capítulos e IA no <span className="text-brand font-semibold">fabricadecortes.com</span>.
             </p>
             <div className="pt-2 text-xs text-text-secondary">
               <p>
@@ -50,6 +62,19 @@ export function Footer() {
             <h4 className="mb-3 text-sm font-semibold text-text-primary">Acesso & Produtos</h4>
             <ul className="space-y-2">
               {LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 text-sm font-semibold text-text-primary">Cortes por nicho</h4>
+            <ul className="space-y-2">
+              {NICHOS.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
                     {l.label}

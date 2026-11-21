@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { FAQSection } from '@/components/sections/faq-section';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Perguntas Frequentes sobre Cortes com IA | Fábrica dos Cortes',
+  description:
+    'Tire suas dúvidas sobre créditos, Melhores Momentos, legendas automáticas, uso no PC ou na nuvem e entrega da licença da Fábrica dos Cortes.',
+  alternates: { canonical: '/faq' },
+};
 
 export default function FAQPage() {
   return (

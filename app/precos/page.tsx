@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getActivePlans } from '@/lib/plans';
 import { formatPrice, cn } from '@/lib/utils';
@@ -8,6 +9,13 @@ import { Check, Clapperboard, Coins, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Preços e Pacotes de Cortes com IA | Fábrica dos Cortes',
+  description:
+    'Pacotes de cortes com IA a partir de R$ 19,90 no Pix, sem mensalidade. Créditos válidos por 365 dias: 1 crédito = 1 corte com legenda e enquadramento.',
+  alternates: { canonical: '/precos' },
+};
 
 export default async function PrecosPage() {
   const plans = await getActivePlans();
