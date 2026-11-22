@@ -19,20 +19,28 @@ import { Button } from '@/components/ui/button';
 import { syncAbacatePay } from '@/lib/sync-abacatepay';
 import { prisma } from '@/lib/db';
 import { driveUrl } from '@/lib/provisioning';
+import { AdsConversion } from '@/components/ads-conversion';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+type RetornoParams = { orderId?: string; checkoutId?: string; email?: string; status?: string };
+
 interface RetornoPageProps {
-  searchParams?: { orderId?: string; checkoutId?: string; email?: string; status?: string };
+  // Next 15+: searchParams chega como Promise (o await tambem funciona se vier objeto)
+  searchParams?: Promise<RetornoParams> | RetornoParams;
 }
 
 export default async function RetornoPage({ searchParams }: RetornoPageProps) {
   // Sincroniza pagamentos da AbacatePay instantaneamente ao carregar a página
   await syncAbacatePay().catch((e) => console.error('[Retorno] Erro ao sincronizar AbacatePay:', e));
 
-  const customerEmail = searchParams?.email;
-  const orderId = searchParams?.orderId;
+  const params: RetornoParams = (await searchParams) ?? {};
+  const customerEmail = params.email;
+  const orderId = params.orderId || params.checkoutId;
+
+  // Conversao do Google Ads: so para pedido realmente pago.
+  let conversion: { id: string; value: number } | null = null;
 
   // O curso/Área de Membros só aparece para quem contratou o order bump.
   let includeCourse = false;
@@ -46,17 +54,20 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
               { abacateOrderId: orderId },
             ],
           },
-          select: { customerId: true, metadata: true },
+          select: { id: true, status: true, amount: true, customerId: true, metadata: true },
         })
       : customerEmail
         ? await prisma.order.findFirst({
             where: { customer: { email: customerEmail } },
             orderBy: { createdAt: 'desc' },
-            select: { customerId: true, metadata: true },
+            select: { id: true, status: true, amount: true, customerId: true, metadata: true },
           })
         : null;
 
     if (order) {
+      if (order.status === 'paid') {
+        conversion = { id: order.id, value: (order.amount || 0) / 100 };
+      }
       const ownMeta = (order.metadata || {}) as Record<string, unknown>;
       includeCourse = ownMeta.includeCourse === true || ownMeta.includeCourse === 'true';
 
@@ -89,6 +100,7 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
   return (
     <div className="min-h-screen bg-[#070709] text-text-primary flex flex-col justify-between selection:bg-brand selection:text-white">
       <Navbar />
+      {conversion && <AdsConversion transactionId={conversion.id} value={conversion.value} />}
 
       <main className="relative mx-auto w-full max-w-4xl px-4 py-12 sm:py-20 flex-1 flex flex-col justify-center">
         {/* Glow Effects de Fundo */}

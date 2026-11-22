@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { AffiliateTracker } from '@/components/affiliate-tracker';
+import { GoogleTags } from '@/components/google-tags';
 import { SITE_URL, SITE_NAME, GLOBAL_KEYWORDS, DEFAULT_OG_IMAGE } from '@/lib/seo';
 
 const inter = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen bg-background text-text-primary font-sans antialiased selection:bg-brand selection:text-white">
+        <GoogleTags />
         <AffiliateTracker />
         {children}
       </body>
