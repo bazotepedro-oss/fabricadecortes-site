@@ -107,7 +107,7 @@ export function AccessCard() {
 
   const copyAll = () => {
     if (!result) return;
-    const text = `🔥 Acesso Fábrica dos Cortes (fabricadecortes.com)\nChave de Licença: ${result.licenseKey}\nUsuário: ${result.username}\nCréditos: ${result.credits}\nGoogle Drive (Aulas e Instalador): ${result.driveUrl || result.courseUrl}\nGrupo VIP WhatsApp: ${result.whatsappUrl || 'https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s'}`;
+    const text = `🔥 Acesso Fábrica dos Cortes (fabricadecortes.com)\nChave de Licença: ${result.licenseKey}\nUsuário: ${result.username}\nCréditos: ${result.credits}\nGoogle Drive (Aulas e Instalador): ${result.driveUrl || result.courseUrl}\nGrupo VIP WhatsApp: ${result.whatsappUrl || 'https://chat.whatsapp.com/D2qbpUi24ao1u7y1yWC4zF'}`;
     navigator.clipboard.writeText(text);
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2000);
@@ -215,7 +215,7 @@ export function AccessCard() {
                 </div>
                 <div className="pt-4">
                   <Button asChild className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white font-bold" size="sm">
-                    <a href={result.whatsappUrl || 'https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s'} target="_blank" rel="noreferrer">
+                    <a href={result.whatsappUrl || 'https://chat.whatsapp.com/D2qbpUi24ao1u7y1yWC4zF'} target="_blank" rel="noreferrer">
                       <MessageCircle className="h-4 w-4 mr-1.5" /> Entrar no Grupo
                     </a>
                   </Button>

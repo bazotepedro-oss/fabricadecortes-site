@@ -92,7 +92,7 @@ export default async function RetornoPage({ searchParams }: RetornoPageProps) {
   }
 
   const whatsappUrl =
-    process.env.WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s';
+    'https://chat.whatsapp.com/D2qbpUi24ao1u7y1yWC4zF';
   const membersUrl =
     process.env.NEXT_PUBLIC_MEMBERS_URL || 'https://membros.fabricadecortes.com';
   const appDownloadUrl = driveUrl();

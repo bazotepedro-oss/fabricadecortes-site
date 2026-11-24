@@ -72,7 +72,7 @@ export default function ContatoPage() {
             </p>
             <p className="font-semibold text-text-primary text-sm">
               <a
-                href="https://chat.whatsapp.com/G0yGg1Rl0K3J8OUEChfc4s"
+                href="https://chat.whatsapp.com/D2qbpUi24ao1u7y1yWC4zF"
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline inline-flex items-center gap-1"
