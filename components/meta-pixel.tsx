@@ -22,9 +22,27 @@ function PageViewOnNavigate() {
   useEffect(() => {
     if (first.current) {
       first.current = false; // o primeiro PageView já vai no código base
-      return;
+    } else {
+      window.fbq?.('track', 'PageView');
     }
-    window.fbq?.('track', 'PageView');
+    // Abriu o checkout com um plano: "Iniciar finalização da compra".
+    if (pathname?.startsWith('/checkout')) {
+      const plan = searchParams?.get('plan') || searchParams?.get('slug') || '';
+      let tries = 0;
+      // na primeira visita o fbq ainda está carregando: espera ele ficar pronto
+      const send = () => {
+        if (window.fbq) {
+          window.fbq('track', 'InitiateCheckout', {
+            currency: 'BRL',
+            content_ids: plan ? [plan] : undefined,
+            content_type: 'product',
+          });
+        } else if (tries++ < 20) {
+          setTimeout(send, 500);
+        }
+      };
+      send();
+    }
   }, [pathname, searchParams]);
 
   return null;
